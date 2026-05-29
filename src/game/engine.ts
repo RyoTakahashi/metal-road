@@ -6,12 +6,12 @@ import { calculateRank } from '../data/venues';
 
 // ===== チューニング用定数 =====
 export const CONFIG = {
-  MAX_TURNS: 12, // この回数までにゴールしないとタイムアップ
+  MAX_TURNS: 16, // この回数までにゴールしないとタイムアップ（22歳→30歳）
   DEBT_LIMIT: -10000, // これを下回るとゲームオーバー（借金まみれ）
-  DICE_MAX: 3, // 1〜3 のサイコロ（盤面長に合わせて短め）
-  START_AGE: 24,
+  DICE_MAX: 5, // 1〜5 のサイコロ
+  START_AGE: 22,
   MONTHS_PER_TURN: 6,
-  UPKEEP_MONEY: 1200, // 毎ターンの活動費（家賃・スタジオ・食費）
+  UPKEEP_MONEY: 1000, // 毎ターンの活動費（家賃・スタジオ・食費）
   UPKEEP_MORALE: 2, // 毎ターンの士気消耗（活動の疲弊）
 };
 
@@ -24,7 +24,7 @@ const INITIAL_MEMBERS: Member[] = [
 
 export function createInitialState(): GameState {
   return {
-    stats: { fans: 50, skill: 12, morale: 60, money: 3000 },
+    stats: { fans: 50, skill: 12, morale: 60, money: 4000 },
     members: INITIAL_MEMBERS.map((m) => ({ ...m })),
     turn: 1,
     maxTurns: CONFIG.MAX_TURNS,

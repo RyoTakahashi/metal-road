@@ -1,5 +1,33 @@
 import { motion } from 'framer-motion';
 import type { Ending, Stats, Venue } from '../types';
+import { EventScene } from './scenes/EventScene';
+import { Chibi } from './sprites/Chibi';
+
+function LonelyScene() {
+  return (
+    <svg viewBox="0 0 480 200" style={{ width: '100%', maxWidth: 480, borderRadius: 12, display: 'block' }} preserveAspectRatio="xMidYMid slice">
+      <rect width={480} height={200} fill="#0a0a10" />
+      <rect x={0} y={160} width={480} height={40} fill="#101017" />
+      {/* 雨 */}
+      {Array.from({ length: 24 }).map((_, i) => (
+        <motion.line
+          key={i}
+          x1={(i * 53) % 480}
+          y1={-10}
+          x2={(i * 53) % 480}
+          y2={6}
+          stroke="#2a3550"
+          strokeWidth={1.5}
+          animate={{ y: [0, 210] }}
+          transition={{ duration: 0.9 + (i % 4) * 0.2, repeat: Infinity, delay: (i % 6) * 0.15, ease: 'linear' }}
+        />
+      ))}
+      <g transform="translate(208 78)" opacity={0.9}>
+        <Chibi look={{ instrument: 'guitar', hair: '#7a7a86', skin: '#cbb39a' }} />
+      </g>
+    </svg>
+  );
+}
 
 interface Props {
   ending: Ending;
@@ -13,6 +41,14 @@ export function EndingScreen({ ending, venue, stats, onRestart }: Props) {
 
   return (
     <div className="center-screen">
+      <motion.div
+        style={{ width: 'min(560px, 92vw)' }}
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+      >
+        {isGoal ? <EventScene kind="goal" /> : <LonelyScene />}
+      </motion.div>
+
       <motion.div
         className="tag"
         initial={{ opacity: 0 }}

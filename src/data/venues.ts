@@ -5,12 +5,12 @@ import type { Stats, Venue } from '../types';
  * minFans の降順に並べておく。
  */
 export const VENUES: Venue[] = [
-  { rank: 'SS', name: '東京ドーム', capacity: 50000, minFans: 7000 },
-  { rank: 'S', name: '日本武道館', capacity: 14000, minFans: 5000 },
-  { rank: 'A', name: '横浜アリーナ', capacity: 10000, minFans: 3000 },
-  { rank: 'B', name: 'Zepp（ライブハウス大）', capacity: 3000, minFans: 1500 },
-  { rank: 'C', name: '市民ホール', capacity: 1500, minFans: 500 },
-  { rank: 'D', name: 'ライブハウス（小箱）', capacity: 200, minFans: 150 },
+  { rank: 'SS', name: '東京ドーム', capacity: 50000, minFans: 18000 },
+  { rank: 'S', name: '日本武道館', capacity: 14000, minFans: 11000 },
+  { rank: 'A', name: '横浜アリーナ', capacity: 10000, minFans: 6000 },
+  { rank: 'B', name: 'Zepp（ライブハウス大）', capacity: 3000, minFans: 2500 },
+  { rank: 'C', name: '市民ホール', capacity: 1500, minFans: 900 },
+  { rank: 'D', name: 'ライブハウス（小箱）', capacity: 200, minFans: 250 },
   { rank: 'E', name: '路上ライブ', capacity: 30, minFans: 0 },
 ];
 

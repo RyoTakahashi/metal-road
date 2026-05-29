@@ -14,6 +14,25 @@ export interface Stats {
 
 export type StatKey = keyof Stats;
 
+/** イベント演出シーンの種類（アニメ付きイラストの出し分け）。 */
+export type SceneKind =
+  | 'street'
+  | 'livehouse'
+  | 'studio'
+  | 'sns'
+  | 'flame'
+  | 'member'
+  | 'trouble'
+  | 'tv'
+  | 'contract'
+  | 'press'
+  | 'fans'
+  | 'tour'
+  | 'festival'
+  | 'arena'
+  | 'overseas'
+  | 'goal';
+
 /** A band member on the roster. */
 export interface Member {
   id: string;
@@ -56,6 +75,8 @@ export interface GameEvent {
   choices: Choice[];
   /** 選択肢なしイベントの即時効果（choices が空のとき使用） */
   autoEffects?: Effect;
+  /** 演出シーン種別 */
+  scene: SceneKind;
 }
 
 export type SquareType =
@@ -79,6 +100,8 @@ export interface Square {
   next: string[];
   /** 分岐時に各 next を説明するラベル（next と同じ順序） */
   branchLabels?: string[];
+  /** マスに立つキャラ/装飾のヒント（任意） */
+  scene?: SceneKind;
   /** SVG 配置座標（盤面レイアウト用） */
   x: number;
   y: number;
