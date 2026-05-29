@@ -306,4 +306,96 @@ button {
 .scrollboard {
   flex: 1;
   overflow: auto;
+  display: flex;
+  align-items: safe center;
+  justify-content: safe center;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ===== タブレット縦・狭い画面：1カラムに ===== */
+@media (max-width: 1000px) {
+  .game-shell {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    height: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+  .topbar {
+    order: 0;
+  }
+  .stage {
+    order: 1;
+    height: 50vh;
+    height: 50dvh;
+    min-height: 300px;
+  }
+  .sidebar {
+    order: 2;
+    overflow: visible;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+  .log {
+    max-height: 220px;
+  }
+}
+
+/* ===== スマホ：要素を積み上げ、文字とパーツを最適化 ===== */
+@media (max-width: 620px) {
+  .game-shell {
+    padding: 8px;
+    gap: 8px;
+  }
+  .topbar {
+    flex-wrap: wrap;
+    gap: 6px 12px;
+    padding: 8px 12px;
+  }
+  .topbar .metal-title {
+    font-size: 18px !important;
+  }
+  .sidebar {
+    grid-template-columns: 1fr;
+  }
+  .stage {
+    height: 44vh;
+    height: 44dvh;
+    min-height: 260px;
+  }
+  .modal-backdrop {
+    padding: 12px;
+    align-items: flex-end;
+  }
+  .modal {
+    width: 100%;
+  }
+  .modal-head {
+    font-size: 16px;
+    padding: 12px 14px;
+  }
+  .modal-body {
+    padding: 14px;
+  }
+  .dice {
+    width: 64px;
+    height: 64px;
+    font-size: 32px;
+  }
+  .rank-badge {
+    font-size: 64px;
+  }
+  /* タッチ操作向けに当たり判定を確保 */
+  .btn {
+    padding: 12px 14px;
+  }
+}
+
+/* 画面が低い（横向きスマホ等）とき盤面を圧迫しすぎない */
+@media (max-height: 520px) and (max-width: 1000px) {
+  .stage {
+    height: 60vh;
+    height: 60dvh;
+  }
 }

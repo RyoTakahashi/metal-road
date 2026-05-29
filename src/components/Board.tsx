@@ -28,7 +28,7 @@ export function Board({ currentSquareId, branchOptions }: BoardProps) {
     <div className="scrollboard">
       <svg
         viewBox={`0 0 ${BOARD_VIEWBOX.width} ${BOARD_VIEWBOX.height}`}
-        style={{ width: '100%', minWidth: 900, height: '100%', display: 'block' }}
+        style={{ width: '100%', minWidth: 900, height: 'auto', display: 'block' }}
       >
         {/* 経路 */}
         {BOARD.map((sq) =>
