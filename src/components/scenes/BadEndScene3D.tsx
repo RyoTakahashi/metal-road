@@ -75,10 +75,11 @@ export function BadEndScene3D() {
     >
       <color attach="background" args={['#06070d']} />
       <fog attach="fog" args={['#06070d', 6, 22]} />
-      <ambientLight intensity={0.3} color="#3a4a6a" />
-      <hemisphereLight intensity={0.25} color="#2a3550" groundColor="#04040a" />
-      <directionalLight position={[2, 6, 4]} intensity={0.4} color="#7a8ab0" />
-      <spotLight position={[0, 7, 3]} angle={0.4} penumbra={0.8} intensity={40} distance={18} color="#9ab0d0" />
+      <ambientLight intensity={0.42} color="#3a4a6a" />
+      <hemisphereLight intensity={0.3} color="#2a3550" groundColor="#04040a" />
+      <directionalLight position={[2, 6, 4]} intensity={0.55} color="#8a9ac0" />
+      <spotLight position={[0, 7, 3]} angle={0.45} penumbra={0.8} intensity={85} distance={18} color="#aac0e0" />
+      <pointLight position={[0, 2, 3]} intensity={14} distance={10} color="#7a8ab0" />
 
       {/* 濡れた地面 */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
