@@ -221,11 +221,21 @@ button {
   gap: 10px;
 }
 
-/* イベント演出シーン */
+/* イベント演出シーン（3D） */
 .modal-scene {
   position: relative;
   border-bottom: 2px solid var(--blood);
   line-height: 0;
+  height: 230px;
+  background: #06060e;
+}
+.scene-loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 28px;
+  line-height: 1;
 }
 .modal-scene-title {
   position: absolute;
@@ -452,6 +462,9 @@ button {
   .modal-head {
     font-size: 16px;
     padding: 12px 14px;
+  }
+  .modal-scene {
+    height: 185px;
   }
   .modal-body {
     padding: 14px;

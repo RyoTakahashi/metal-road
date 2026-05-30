@@ -5,32 +5,10 @@ import * as THREE from 'three';
 import { BOARD, BOARD_BY_ID } from '../data/board';
 import type { Square } from '../types';
 import { Metalhead } from '../three/Metalhead';
+import { EmojiSprite } from '../three/sprites';
 import { TILE, TYPE_3D, worldPos, worldPosById } from '../three/boardLayout';
 
 const isMobile = typeof window !== 'undefined' && window.innerWidth < 820;
-
-/** 絵文字を CanvasTexture 化（タイル上のアイコン用、軽量＆常にカメラ向き）。 */
-function emojiTexture(emoji: string): THREE.Texture {
-  const c = document.createElement('canvas');
-  c.width = c.height = 128;
-  const ctx = c.getContext('2d')!;
-  ctx.font = '92px serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(emoji, 64, 74);
-  const t = new THREE.CanvasTexture(c);
-  t.needsUpdate = true;
-  return t;
-}
-
-function IconSprite({ emoji, position }: { emoji: string; position: [number, number, number] }) {
-  const map = useMemo(() => emojiTexture(emoji), [emoji]);
-  return (
-    <sprite position={position} scale={[1.2, 1.2, 1.2]}>
-      <spriteMaterial map={map} transparent depthWrite={false} toneMapped={false} />
-    </sprite>
-  );
-}
 
 /** 強調リング（現在マス・分岐候補）。 */
 function PulseRing({ color, current }: { color: string; current?: boolean }) {
@@ -96,7 +74,7 @@ function Tile3D({ sq, isCurrent, isOption }: { sq: Square; isCurrent: boolean; i
         </group>
       )}
 
-      <IconSprite emoji={style.icon} position={[0, TILE.height + 1.0, 0]} />
+      <EmojiSprite emoji={style.icon} position={[0, TILE.height + 1.0, 0]} scale={1.2} />
     </group>
   );
 }

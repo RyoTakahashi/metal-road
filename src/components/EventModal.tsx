@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { Suspense, lazy, useState } from 'react';
 import { motion } from 'framer-motion';
 import type { Effect, GameEvent } from '../types';
 import { sfx } from '../audio/sfx';
-import { EventScene } from './scenes/EventScene';
+
+// 3D演出シーン（three.js を含むため遅延ロード。盤面で既にロード済みなら即時）
+const EventScene3D = lazy(() => import('./scenes/EventScene3D').then((m) => ({ default: m.EventScene3D })));
 
 interface Props {
   event: GameEvent;
@@ -64,7 +66,9 @@ export function EventModal({ event, result, onChoose, onContinueAuto, onAck }: P
         transition={{ type: 'spring', stiffness: 300, damping: 24 }}
       >
         <div className="modal-scene">
-          <EventScene kind={event.scene} />
+          <Suspense fallback={<div className="scene-loading">🤘</div>}>
+            <EventScene3D kind={event.scene} />
+          </Suspense>
           <div className="modal-scene-title">⚡ {event.title}</div>
         </div>
         <div className="modal-body">
