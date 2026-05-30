@@ -3,6 +3,7 @@ import { AnimatePresence } from 'framer-motion';
 import { useGame } from './hooks/useGame';
 import { ageLabel } from './game/engine';
 import { setSfxEnabled } from './audio/sfx';
+import { setBgmEnabled, startBgm } from './audio/bgm';
 import { StatusPanel } from './components/StatusPanel';
 import { MemberList } from './components/MemberList';
 import { LogPanel } from './components/LogPanel';
@@ -18,6 +19,7 @@ const Board3D = lazy(() => import('./components/Board3D').then((m) => ({ default
 export default function App() {
   const { state, start, restart, roll, chooseBranch, choose, continueAuto, ack } = useGame();
   const [sound, setSound] = useState(true);
+  const [bgm, setBgm] = useState(true);
 
   const toggleSound = () => {
     const next = !sound;
@@ -25,10 +27,22 @@ export default function App() {
     setSfxEnabled(next);
   };
 
+  const toggleBgm = () => {
+    const next = !bgm;
+    setBgm(next);
+    setBgmEnabled(next);
+  };
+
+  // タイトルの「旅を始める」でメインテーマを再生開始（ユーザー操作起点）
+  const handleStart = () => {
+    startBgm();
+    start();
+  };
+
   if (state.phase === 'title') {
     return (
       <div className="app">
-        <TitleScreen onStart={start} />
+        <TitleScreen onStart={handleStart} />
       </div>
     );
   }
@@ -52,10 +66,13 @@ export default function App() {
         <span className="metal-title" style={{ fontSize: 22 }}>
           🤘 METAL ROAD
         </span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           <span style={{ fontSize: 14, color: 'var(--muted)' }}>
             📅 ターン {state.turn}/{state.maxTurns}　|　{ageLabel(state.turn)}
           </span>
+          <button className="btn" style={{ padding: '6px 12px' }} onClick={toggleBgm}>
+            {bgm ? '🎵 BGM ON' : '🎵 BGM OFF'}
+          </button>
           <button className="btn" style={{ padding: '6px 12px' }} onClick={toggleSound}>
             {sound ? '🔊 SE ON' : '🔇 SE OFF'}
           </button>
