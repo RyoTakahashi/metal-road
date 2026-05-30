@@ -14,6 +14,7 @@ export type Action =
   | { type: 'START' }
   | { type: 'RESTART' }
   | { type: 'ROLL' }
+  | { type: 'BEGIN_MOVE' }
   | { type: 'STEP' }
   | { type: 'CHOOSE_BRANCH'; targetId: string }
   | { type: 'CHOOSE'; index: number }
@@ -107,6 +108,13 @@ export function reducer(state: GameState, action: Action): GameState {
       const s = clone(state);
       s.dice = rollDiceValue();
       s.stepsRemaining = s.dice;
+      s.phase = 'rolling'; // 出目が確定するまでの演出。移動は BEGIN_MOVE で開始
+      return s;
+    }
+
+    case 'BEGIN_MOVE': {
+      if (state.phase !== 'rolling') return state;
+      const s = clone(state);
       s.phase = 'moving';
       return s;
     }

@@ -14,6 +14,9 @@ const ending = params.get('ending'); // 'goal' | 'bad'（エンディング確�
 const LiveStageScene3D = lazy(() =>
   import('./slice/LiveStageScene3D').then((m) => ({ default: m.LiveStageScene3D })),
 );
+const BadEndScene3D = lazy(() =>
+  import('./components/scenes/BadEndScene3D').then((m) => ({ default: m.BadEndScene3D })),
+);
 const EventScene3D = lazy(() =>
   import('./components/scenes/EventScene3D').then((m) => ({ default: m.EventScene3D })),
 );
@@ -28,11 +31,11 @@ const fallback = (
 );
 
 let root: React.ReactNode = <App />;
-if (slice === 'stage') {
+if (slice === 'stage' || slice === 'badend') {
   root = (
     <Suspense fallback={fallback}>
       <div style={{ position: 'fixed', inset: 0, background: '#04040a' }}>
-        <LiveStageScene3D />
+        {slice === 'badend' ? <BadEndScene3D /> : <LiveStageScene3D />}
       </div>
     </Suspense>
   );

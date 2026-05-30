@@ -136,7 +136,7 @@ export interface Venue {
 export type GamePhase =
   | 'title'
   | 'idle' // ダイスを振れる
-  | 'rolling'
+  | 'rolling' // サイコロを振って出目が確定するまでの演出
   | 'moving'
   | 'branch' // 分岐選択待ち
   | 'event' // イベント表示中

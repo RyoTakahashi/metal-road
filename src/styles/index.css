@@ -348,6 +348,11 @@ button {
   inset: 0;
   z-index: 0;
 }
+.screen3d .scene-bg.poster {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
 .screen3d .scrim {
   position: absolute;
   inset: 0;

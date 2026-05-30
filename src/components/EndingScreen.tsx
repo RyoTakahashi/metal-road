@@ -1,10 +1,9 @@
-import { Suspense, lazy } from 'react';
 import { motion } from 'framer-motion';
 import type { Ending, Stats, Venue } from '../types';
 
-// エンディング背景の3D（成功＝歓声のステージ／失敗＝雨の寂寥）
-const StageBg = lazy(() => import('../slice/LiveStageScene3D').then((m) => ({ default: m.LiveStageScene3D })));
-const BadEndBg = lazy(() => import('./scenes/BadEndScene3D').then((m) => ({ default: m.BadEndScene3D })));
+// エンディング背景は事前レンダリングのポスター（成功＝歓声のステージ／失敗＝雨の寂寥）
+const STAGE_POSTER = `${import.meta.env.BASE_URL}posters/stage.jpg`;
+const BADEND_POSTER = `${import.meta.env.BASE_URL}posters/badend.jpg`;
 
 interface Props {
   ending: Ending;
@@ -18,9 +17,10 @@ export function EndingScreen({ ending, venue, stats, onRestart }: Props) {
 
   return (
     <div className="screen3d">
-      <div className="scene-bg">
-        <Suspense fallback={null}>{isGoal ? <StageBg /> : <BadEndBg />}</Suspense>
-      </div>
+      <div
+        className="scene-bg poster"
+        style={{ backgroundImage: `url("${isGoal ? STAGE_POSTER : BADEND_POSTER}")` }}
+      />
       <div className="scrim" />
 
       <div className="content center-screen">

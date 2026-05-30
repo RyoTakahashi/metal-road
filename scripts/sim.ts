@@ -11,6 +11,8 @@ function autoChoose(s: GameState): Action | null {
       return { type: 'START' };
     case 'idle':
       return { type: 'ROLL' };
+    case 'rolling':
+      return { type: 'BEGIN_MOVE' };
     case 'moving':
       return { type: 'STEP' };
     case 'branch':

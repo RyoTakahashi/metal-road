@@ -1,17 +1,15 @@
-import { Suspense, lazy } from 'react';
 import { motion } from 'framer-motion';
 
-// タイトル背景の3Dステージ（重いので遅延ロード。ロゴ等は即時表示）
-const StageBg = lazy(() => import('../slice/LiveStageScene3D').then((m) => ({ default: m.LiveStageScene3D })));
+// タイトル背景は3Dステージを事前レンダリングした静止画ポスター（高速＆コンテキスト安定）
+const STAGE_POSTER = `${import.meta.env.BASE_URL}posters/stage.jpg`;
 
 export function TitleScreen({ onStart }: { onStart: () => void }) {
   return (
     <div className="screen3d">
-      <div className="scene-bg">
-        <Suspense fallback={null}>
-          <StageBg />
-        </Suspense>
-      </div>
+      <div
+        className="scene-bg poster"
+        style={{ backgroundImage: `url("${STAGE_POSTER}")` }}
+      />
       <div className="scrim" />
 
       <div className="content center-screen">

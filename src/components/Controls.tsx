@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import type { GamePhase } from '../types';
 import { CONFIG } from '../game/engine';
@@ -34,7 +35,20 @@ function DieFace({ value }: { value: number }) {
 
 export function Controls({ dice, phase, onRoll }: Props) {
   const canRoll = phase === 'idle';
-  const rolling = phase === 'moving';
+  const rolling = phase === 'rolling'; // 出目が確定するまでの転がり演出
+  const moving = phase === 'moving';
+
+  // 転がり中はランダムな面を高速で切り替え、確定したら実際の出目を表示する
+  const [face, setFace] = useState(dice ?? 1);
+  useEffect(() => {
+    if (rolling) {
+      const id = setInterval(() => setFace(1 + Math.floor(Math.random() * CONFIG.DICE_MAX)), 70);
+      return () => clearInterval(id);
+    }
+    if (dice) setFace(dice);
+  }, [rolling, dice]);
+
+  const label = canRoll ? '🤘 サイコロを振る' : rolling ? '出目を確定中…' : moving ? '移動中…' : '進行中…';
 
   return (
     <div className="panel">
@@ -44,20 +58,15 @@ export function Controls({ dice, phase, onRoll }: Props) {
           style={{ width: 72, height: 72, transformStyle: 'preserve-3d' }}
           animate={
             rolling
-              ? { rotateX: [0, 360, 720], rotateZ: [0, 180, 360], scale: [1, 1.12, 1] }
+              ? { rotateX: [0, 360, 720], rotateZ: [0, 180, 360], scale: [1, 1.15, 1] }
               : { rotateX: 0, rotateZ: 0, scale: 1 }
           }
-          transition={rolling ? { duration: 0.6, repeat: Infinity, ease: 'linear' } : { type: 'spring' }}
+          transition={rolling ? { duration: 0.6, repeat: Infinity, ease: 'linear' } : { type: 'spring', stiffness: 300, damping: 12 }}
         >
-          <DieFace value={dice ?? 1} />
+          <DieFace value={face} />
         </motion.div>
-        <button
-          className="btn btn-primary"
-          style={{ width: '100%' }}
-          disabled={!canRoll}
-          onClick={onRoll}
-        >
-          {canRoll ? '🤘 サイコロを振る' : rolling ? '移動中…' : '進行中…'}
+        <button className="btn btn-primary" style={{ width: '100%' }} disabled={!canRoll} onClick={onRoll}>
+          {label}
         </button>
         <div style={{ fontSize: 11, color: 'var(--muted)' }}>1〜{CONFIG.DICE_MAX} のサイコロ</div>
       </div>

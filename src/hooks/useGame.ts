@@ -4,10 +4,18 @@ import { createInitialState } from '../game/engine';
 import { sfx } from '../audio/sfx';
 
 const STEP_MS = 300; // コマが1マス進む間隔
+const ROLL_MS = 900; // サイコロを振ってから出目が確定し、移動を始めるまでの演出時間
 
 export function useGame() {
   const [state, dispatch] = useReducer(reducer, undefined, createInitialState);
   const endSoundPlayed = useRef(false);
+
+  // サイコロ演出：出目が確定してから移動を開始する
+  useEffect(() => {
+    if (state.phase !== 'rolling') return;
+    const id = setTimeout(() => dispatch({ type: 'BEGIN_MOVE' }), ROLL_MS);
+    return () => clearTimeout(id);
+  }, [state.phase]);
 
   // 移動アニメーション：phase が moving の間、1マスずつ進める
   useEffect(() => {
