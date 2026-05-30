@@ -347,6 +347,49 @@ button {
   -webkit-overflow-scrolling: touch;
 }
 
+/* ===== 3D 盤面 ===== */
+.board3d {
+  position: absolute;
+  inset: 0;
+}
+.board3d canvas {
+  display: block;
+  touch-action: none;
+}
+.board3d-hud {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 18px;
+  background: rgba(10, 10, 16, 0.78);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  backdrop-filter: blur(6px);
+  box-shadow: var(--shadow);
+  pointer-events: none;
+}
+.board3d-hud .hud-icon {
+  font-size: 22px;
+}
+.board3d-hud .hud-title {
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  font-size: 15px;
+}
+.board3d-loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
 /* ===== タブレット縦・狭い画面：1カラムに ===== */
 @media (max-width: 1000px) {
   .game-shell {

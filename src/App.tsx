@@ -1,9 +1,8 @@
-import { useState } from 'react';
+import { Suspense, lazy, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { useGame } from './hooks/useGame';
 import { ageLabel } from './game/engine';
 import { setSfxEnabled } from './audio/sfx';
-import { Board } from './components/Board';
 import { StatusPanel } from './components/StatusPanel';
 import { MemberList } from './components/MemberList';
 import { LogPanel } from './components/LogPanel';
@@ -12,6 +11,9 @@ import { EventModal } from './components/EventModal';
 import { BranchModal } from './components/BranchModal';
 import { TitleScreen } from './components/TitleScreen';
 import { EndingScreen } from './components/EndingScreen';
+
+// 3D盤面は three.js を含み重いので、ゲーム開始時にだけ遅延ロードする
+const Board3D = lazy(() => import('./components/Board3D').then((m) => ({ default: m.Board3D })));
 
 export default function App() {
   const { state, start, restart, roll, chooseBranch, choose, continueAuto, ack } = useGame();
@@ -68,7 +70,9 @@ export default function App() {
       </div>
 
       <div className="stage">
-        <Board currentSquareId={state.currentSquareId} branchOptions={state.branchOptions} />
+        <Suspense fallback={<div className="board3d-loading">🤘 3D盤面を読み込み中…</div>}>
+          <Board3D currentSquareId={state.currentSquareId} branchOptions={state.branchOptions} />
+        </Suspense>
 
         <AnimatePresence>
           {state.phase === 'event' && state.activeEvent && (
