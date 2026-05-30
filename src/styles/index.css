@@ -333,6 +333,33 @@ button {
   gap: 18px;
   padding: 40px 20px;
 }
+
+/* ===== 3D背景つき画面（タイトル/エンディング） ===== */
+.screen3d {
+  position: relative;
+  flex: 1;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  overflow: hidden;
+}
+.screen3d .scene-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+.screen3d .scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: radial-gradient(ellipse at center, rgba(6, 6, 12, 0.35) 0%, rgba(6, 6, 12, 0.82) 75%);
+  pointer-events: none;
+}
+.screen3d .content {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+}
 .tag {
   display: inline-block;
   padding: 4px 10px;
