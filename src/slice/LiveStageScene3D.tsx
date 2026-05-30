@@ -157,9 +157,9 @@ function Crowd() {
     () =>
       Array.from({ length: COUNT }, (_, i) => ({
         x: -8 + (i % 20) * 0.85 + (Math.random() - 0.5) * 0.3,
-        z: 3.2 + Math.floor(i / 20) * 1.15,
+        z: 4.4 + Math.floor(i / 20) * 1.15,
         phase: Math.random() * Math.PI * 2,
-        h: 0.9 + Math.random() * 0.5,
+        h: 1.0 + Math.random() * 0.5,
       })),
     [],
   );
@@ -168,12 +168,12 @@ function Crowd() {
     data.forEach((d, i) => {
       const bob = Math.sin(t * 5 + d.phase) * 0.09;
       dummy.position.set(d.x, d.h / 2 + bob, d.z);
-      dummy.scale.set(0.42, d.h, 0.42);
+      dummy.scale.set(0.4, d.h, 0.4);
       dummy.rotation.set(0, 0, 0);
       dummy.updateMatrix();
       bodies.current?.setMatrixAt(i, dummy.matrix);
-      dummy.position.set(d.x, d.h + 0.18 + bob, d.z);
-      dummy.scale.set(0.5, 0.5, 0.5);
+      dummy.position.set(d.x, d.h + 0.16 + bob, d.z);
+      dummy.scale.set(0.42, 0.42, 0.42);
       dummy.updateMatrix();
       heads.current?.setMatrixAt(i, dummy.matrix);
     });
@@ -187,8 +187,8 @@ function Crowd() {
         <meshStandardMaterial color="#08080f" roughness={0.9} />
       </instancedMesh>
       <instancedMesh ref={heads} args={[undefined, undefined, COUNT]} castShadow>
-        <icosahedronGeometry args={[0.4, 0]} />
-        <meshStandardMaterial color="#0a0a12" roughness={0.9} flatShading />
+        <icosahedronGeometry args={[0.4, 1]} />
+        <meshStandardMaterial color="#0b0b14" roughness={0.9} flatShading />
       </instancedMesh>
     </group>
   );
@@ -232,10 +232,10 @@ function CameraRig() {
   const { camera } = useThree();
   useFrame(({ clock }) => {
     const t = clock.elapsedTime;
-    camera.position.x = Math.sin(t * 0.18) * 2.4;
-    camera.position.y = 2.6 + Math.sin(t * 0.5) * 0.12;
-    camera.position.z = 9.5 + Math.sin(t * 0.12) * 0.6;
-    camera.lookAt(0, 1.4, 0);
+    camera.position.x = Math.sin(t * 0.18) * 1.6;
+    camera.position.y = 2.2 + Math.sin(t * 0.5) * 0.1;
+    camera.position.z = 7.4 + Math.sin(t * 0.12) * 0.5;
+    camera.lookAt(0, 1.5, -0.2);
   });
   return null;
 }
@@ -246,10 +246,16 @@ function Scene() {
       <color attach="background" args={['#04040a']} />
       <fog attach="fog" args={['#06060f', 10, 30]} />
 
-      <ambientLight intensity={0.12} color="#3a3a55" />
-      <hemisphereLight intensity={0.15} color="#222244" groundColor="#000000" />
+      <ambientLight intensity={0.22} color="#3a3a55" />
+      <hemisphereLight intensity={0.26} color="#3a3a66" groundColor="#000000" />
       {/* キーライト（弱め・暖色） */}
-      <directionalLight position={[0, 8, 6]} intensity={0.25} color="#ffd2a0" />
+      <directionalLight position={[0, 8, 6]} intensity={0.4} color="#ffd2a0" />
+      {/* バンド用フロントフィル（主役を見せる。白飛びしない程度） */}
+      <pointLight position={[0, 2.8, 5]} intensity={34} distance={15} decay={2} color="#ffe7cf" />
+      {/* バンド用キーのスポット（原点＝バンド中心を照らす） */}
+      <spotLight position={[0, 7, 5]} angle={0.55} penumbra={0.8} intensity={140} distance={22} color="#fff2e0" castShadow shadow-mapSize-width={1024} shadow-mapSize-height={1024} />
+      {/* バックのリムライト（バンドを背景から浮かせる） */}
+      <pointLight position={[0, 3, -2.6]} intensity={40} distance={12} decay={2} color="#ff2a4a" />
 
       <MovingSpot x={-3.2} color="#ff2238" swing={3} phase={0} />
       <MovingSpot x={3.2} color="#9b5cff" swing={3} phase={2.1} />
@@ -291,10 +297,12 @@ function Scene() {
         </mesh>
       ))}
 
-      {/* バンド */}
-      <Metalhead position={[-2.2, 0, -0.5]} hair="#9b5cff" instrument="guitar" phase={0.5} />
-      <Metalhead position={[0, 0, 0.2]} hair="#d11a35" instrument="vocal" phase={0} />
-      <Metalhead position={[2.2, 0, -0.5]} hair="#2bb6a8" instrument="bass" phase={1.1} />
+      {/* バンド（主役なので少し前＆大きめ） */}
+      <group position={[0, 0, 0.6]} scale={1.15}>
+        <Metalhead position={[-2.1, 0, -0.6]} hair="#9b5cff" instrument="guitar" phase={0.5} />
+        <Metalhead position={[0, 0, 0.3]} hair="#d11a35" instrument="vocal" phase={0} />
+        <Metalhead position={[2.1, 0, -0.6]} hair="#2bb6a8" instrument="bass" phase={1.1} />
+      </group>
 
       <Crowd />
       <Embers />
