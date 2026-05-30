@@ -410,6 +410,77 @@ function Diorama({ kind }: { kind: SceneKind }) {
           <pointLight position={[0, 2, 3]} intensity={8} distance={9} color="#9ad14f" />
         </group>
       );
+
+    case 'backstage':
+      return (
+        <group>
+          <Floor color="#0d0e14" />
+          {/* 楽屋の壁＋鏡＋電球 */}
+          <mesh position={[0, 1.7, -2.2]}>
+            <planeGeometry args={[12, 5]} />
+            <meshStandardMaterial color="#141620" roughness={1} />
+          </mesh>
+          <mesh position={[-2, 1.7, -2.05]}>
+            <planeGeometry args={[1.6, 2.2]} />
+            <meshStandardMaterial color="#0a0c16" metalness={0.6} roughness={0.2} />
+          </mesh>
+          {[-2.7, -2.3, -1.9, -1.5, -1.1].map((x, i) => (
+            <mesh key={i} position={[x, 2.9, -2.0]}>
+              <sphereGeometry args={[0.08, 8, 8]} />
+              <meshBasicMaterial color="#ffe6a0" toneMapped={false} />
+            </mesh>
+          ))}
+          <Amp position={[2, 0.5, -1]} />
+          <Metalhead position={[0.3, 0, 0]} hair="#d11a35" instrument="vocal" headbang={false} />
+          <pointLight position={[-2, 2.4, 0]} intensity={10} distance={9} color="#ffe6a0" />
+          <pointLight position={[0, 2, 3]} intensity={8} distance={10} color="#9aa0c0" />
+        </group>
+      );
+
+    case 'crowd':
+      return (
+        <group>
+          <Floor color="#0a0a14" />
+          <MiniSpot x={-1.5} color="#ff2238" phase={0} />
+          <MiniSpot x={1.5} color="#9b5cff" phase={1.5} />
+          <MiniCrowd count={16} />
+          <FloatingEmojis emoji="🤘" count={8} spread={5} baseY={0.5} topY={4} speed={0.5} scale={0.6} />
+          <pointLight position={[0, 3, 4]} intensity={12} distance={14} color="#ff6a8a" />
+        </group>
+      );
+
+    case 'success':
+      return (
+        <group>
+          <Floor color="#0c0a14" />
+          <MiniSpot x={-1.6} color="#ffd24a" phase={0} />
+          <MiniSpot x={1.6} color="#ff2238" phase={1.2} />
+          <group position={[0, 0, -0.3]}>
+            <Metalhead position={[0, 0, 0]} hair="#d11a35" instrument="vocal" />
+          </group>
+          {[-2, 0, 2].map((x, i) => (
+            <Pyro key={x} x={x} delay={i * 0.4} />
+          ))}
+          <FloatingEmojis emoji="🎉" count={14} spread={6} baseY={0} topY={5} speed={0.6} scale={0.55} />
+          <FloatingEmojis emoji="⭐" count={8} spread={5} baseY={0.5} topY={4.5} speed={0.45} scale={0.5} />
+          <pointLight position={[0, 2.4, 4]} intensity={18} distance={14} color="#ffe0a0" />
+        </group>
+      );
+
+    case 'fail':
+      return (
+        <group>
+          <Floor color="#0a0b10" />
+          <ambientLight intensity={0.2} color="#404a66" />
+          {/* うなだれたコマ（傾けて表現） */}
+          <group rotation={[0.18, 0, 0]}>
+            <Metalhead position={[0, 0, 0]} hair="#7a7a86" instrument="guitar" headbang={false} skin="#cdb39a" />
+          </group>
+          <EmojiSprite emoji="💧" position={[0.5, 2.1, 0.3]} scale={0.6} />
+          <FloatingEmojis emoji="💧" count={6} spread={3} baseY={1.5} topY={3} speed={0.3} scale={0.4} />
+          <pointLight position={[0, 2.5, 3]} intensity={6} distance={9} color="#6a7aa0" />
+        </group>
+      );
   }
 }
 

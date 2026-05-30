@@ -6,7 +6,7 @@
  */
 
 const SRC = `${import.meta.env.BASE_URL}audio/main-theme.mp3`;
-const DEFAULT_VOLUME = 0.45;
+const DEFAULT_VOLUME = 0.28;
 
 let audio: HTMLAudioElement | null = null;
 let enabled = true;

@@ -31,7 +31,12 @@ export type SceneKind =
   | 'festival'
   | 'arena'
   | 'overseas'
-  | 'goal';
+  | 'goal'
+  // 多段演出で使う追加シーン
+  | 'backstage' // 楽屋・舞台裏
+  | 'crowd' // 客席のクローズアップ（盛り上がり/閑散）
+  | 'success' // 成功の余韻（紙吹雪・歓声）
+  | 'fail'; // 失敗・しょんぼり
 
 /** A band member on the roster. */
 export interface Member {
@@ -60,22 +65,42 @@ export interface Effect {
 /** One selectable option inside an event. */
 export interface Choice {
   label: string;
-  /** 選択後に表示する結果テキスト */
+  /** 選択後に表示する結果テキスト（オチ） */
   resultText: string;
   effects: Effect;
+  /** 選択の結末で切り替える演出シーン（省略時はイベント既定のまま） */
+  resultScene?: SceneKind;
+}
+
+/**
+ * 導入の1ステップ（マルチシーン演出）。
+ * 物語を 3〜4 段で見せ、最後に選択 or 自動効果＋オチへ繋ぐ。
+ */
+export interface EventBeat {
+  /** このビートのセリフ/状況 */
+  text: string;
+  /** このビートで切り替える演出シーン（省略時は直前のシーンを継続） */
+  scene?: SceneKind;
 }
 
 /** An event triggered when landing on a square. */
 export interface GameEvent {
   id: string;
   title: string;
-  /** 状況説明 */
+  /** 状況説明（intro 未指定時のフォールバック、互換用） */
   text: string;
+  /**
+   * 導入シーン列（多段演出）。指定すると text の代わりに順番に表示する。
+   * 最後のビートのあとに選択肢/自動効果へ進む。
+   */
+  intro?: EventBeat[];
   /** 選択肢。空なら「続ける」だけの自動進行イベント */
   choices: Choice[];
   /** 選択肢なしイベントの即時効果（choices が空のとき使用） */
   autoEffects?: Effect;
-  /** 演出シーン種別 */
+  /** 自動進行イベントの結末で切り替える演出シーン（省略時は既定） */
+  autoResultScene?: SceneKind;
+  /** 演出シーン種別（既定） */
   scene: SceneKind;
 }
 
