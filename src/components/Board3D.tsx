@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { EffectComposer, Bloom, Vignette, SMAA } from '@react-three/postprocessing';
 import * as THREE from 'three';
@@ -37,19 +37,24 @@ function Tile3D({ sq, isCurrent, isOption }: { sq: Square; isCurrent: boolean; i
     <group position={[x, 0, z]}>
       {/* 台座（六角柱・ローポリ） */}
       <mesh castShadow receiveShadow position={[0, TILE.height / 2, 0]}>
-        <cylinderGeometry args={[TILE.radius, TILE.radius * 0.9, TILE.height, 6]} />
+        <cylinderGeometry args={[TILE.radius, TILE.radius * 0.86, TILE.height, 6]} />
         <meshStandardMaterial
           color={style.color}
           flatShading
-          roughness={0.55}
-          metalness={0.25}
+          roughness={0.4}
+          metalness={0.35}
           emissive={style.emissive}
-          emissiveIntensity={isCurrent ? 0.7 : 0.16}
+          emissiveIntensity={isCurrent ? 0.9 : 0.28}
         />
       </mesh>
-      {/* 天面の縁取り */}
-      <mesh position={[0, TILE.height + 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[TILE.radius * 0.74, TILE.radius * 0.96, 6]} />
+      {/* 天面（少しグロッシー） */}
+      <mesh position={[0, TILE.height + 0.015, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[TILE.radius * 0.82, 6]} />
+        <meshStandardMaterial color={style.color} metalness={0.5} roughness={0.25} emissive={style.emissive} emissiveIntensity={0.15} flatShading />
+      </mesh>
+      {/* 天面の発光縁取り */}
+      <mesh position={[0, TILE.height + 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[TILE.radius * 0.78, TILE.radius * 0.98, 6]} />
         <meshBasicMaterial color={style.emissive} toneMapped={false} side={THREE.DoubleSide} />
       </mesh>
 
@@ -69,7 +74,7 @@ function Tile3D({ sq, isCurrent, isOption }: { sq: Square; isCurrent: boolean; i
           </mesh>
           <mesh position={[0, 3.3, 0]}>
             <boxGeometry args={[2.7, 0.5, 0.4]} />
-            <meshStandardMaterial color="#5a0a0a" emissive="#ff2a44" emissiveIntensity={0.8} toneMapped={false} />
+            <meshStandardMaterial color="#5a0a0a" emissive="#ff2a44" emissiveIntensity={1} toneMapped={false} />
           </mesh>
         </group>
       )}
@@ -79,7 +84,7 @@ function Tile3D({ sq, isCurrent, isOption }: { sq: Square; isCurrent: boolean; i
   );
 }
 
-/** 経路（タイル間のリボン）。 */
+/** 経路（リボン＋発光する中心線）。 */
 function Paths() {
   const segs = useMemo(() => {
     const out: { mid: [number, number, number]; len: number; rot: number; branch: boolean }[] = [];
@@ -92,7 +97,7 @@ function Paths() {
         const dx = b[0] - a[0];
         const dz = b[2] - a[2];
         out.push({
-          mid: [(a[0] + b[0]) / 2, 0.06, (a[2] + b[2]) / 2],
+          mid: [(a[0] + b[0]) / 2, 0.05, (a[2] + b[2]) / 2],
           len: Math.hypot(dx, dz),
           rot: -Math.atan2(dz, dx),
           branch: sq.next.length > 1,
@@ -104,10 +109,17 @@ function Paths() {
   return (
     <group>
       {segs.map((s, i) => (
-        <mesh key={i} position={s.mid} rotation={[0, s.rot, 0]} receiveShadow>
-          <boxGeometry args={[s.len, 0.08, 0.5]} />
-          <meshStandardMaterial color={s.branch ? '#5a4a16' : '#23232e'} emissive={s.branch ? '#5a4a16' : '#000'} roughness={0.8} />
-        </mesh>
+        <group key={i} position={s.mid} rotation={[0, s.rot, 0]}>
+          <mesh receiveShadow>
+            <boxGeometry args={[s.len, 0.08, 0.6]} />
+            <meshStandardMaterial color={s.branch ? '#4a3c12' : '#1e1e28'} roughness={0.8} metalness={0.2} />
+          </mesh>
+          {/* 発光する中心線 */}
+          <mesh position={[0, 0.05, 0]}>
+            <boxGeometry args={[s.len * 0.96, 0.02, 0.06]} />
+            <meshBasicMaterial color={s.branch ? '#e8b339' : '#ff2a55'} toneMapped={false} transparent opacity={0.7} />
+          </mesh>
+        </group>
       ))}
     </group>
   );
@@ -139,8 +151,10 @@ function Pawn3D({ id }: { id: string }) {
   });
 
   return (
-    <group ref={ref} scale={0.6}>
-      <Metalhead hair="#d11a35" instrument="vocal" headbang={false} />
+    <group ref={ref} scale={0.62}>
+      {/* スポット風の足元グロー */}
+      <pointLight position={[0, 1.4, 0.6]} intensity={6} distance={4} color="#ffd2a0" />
+      <Metalhead hair="#d11a35" instrument="vocal" headbang shades />
     </group>
   );
 }
@@ -159,50 +173,83 @@ function CameraRig({ id }: { id: string }) {
   return null;
 }
 
+/** 浮遊するダスト/光の粒（空気感）。 */
+function Dust({ around }: { around: number }) {
+  const ref = useRef<THREE.Points>(null);
+  const N = isMobile ? 60 : 120;
+  const positions = useMemo(() => {
+    const a = new Float32Array(N * 3);
+    for (let i = 0; i < N; i++) {
+      a[i * 3] = (Math.random() - 0.5) * 60;
+      a[i * 3 + 1] = Math.random() * 8;
+      a[i * 3 + 2] = (Math.random() - 0.5) * 14;
+    }
+    return a;
+  }, [N]);
+  useFrame((_, dt) => {
+    if (!ref.current) return;
+    ref.current.position.x = around; // コマ周辺に追従
+    const arr = ref.current.geometry.attributes.position.array as Float32Array;
+    for (let i = 0; i < N; i++) {
+      arr[i * 3 + 1] += dt * 0.25;
+      if (arr[i * 3 + 1] > 8) arr[i * 3 + 1] = 0;
+    }
+    ref.current.geometry.attributes.position.needsUpdate = true;
+  });
+  return (
+    <points ref={ref}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} count={N} />
+      </bufferGeometry>
+      <pointsMaterial color="#ffcf8a" size={0.06} transparent opacity={0.5} blending={THREE.AdditiveBlending} depthWrite={false} />
+    </points>
+  );
+}
+
 function Scene({ currentSquareId, branchOptions }: BoardProps) {
+  const cur = BOARD_BY_ID[currentSquareId];
+  const [cx] = worldPos(cur);
   return (
     <>
-      <color attach="background" args={['#070710']} />
-      <fog attach="fog" args={['#070710', 14, 42]} />
+      <color attach="background" args={['#060610']} />
+      <fog attach="fog" args={['#070713', 12, 40]} />
 
-      <ambientLight intensity={0.4} color="#5a5a7a" />
-      <hemisphereLight intensity={0.35} color="#4a4a77" groundColor="#06060a" />
+      <ambientLight intensity={0.35} color="#5a5a7a" />
+      <hemisphereLight intensity={0.3} color="#4a4a77" groundColor="#06060a" />
       <directionalLight
-        position={[6, 12, 6]}
-        intensity={1.1}
-        color="#ffe8c8"
+        position={[8, 14, 6]}
+        intensity={1.15}
+        color="#ffe6c2"
         castShadow
-        shadow-mapSize-width={isMobile ? 512 : 1024}
-        shadow-mapSize-height={isMobile ? 512 : 1024}
+        shadow-mapSize-width={isMobile ? 512 : 2048}
+        shadow-mapSize-height={isMobile ? 512 : 2048}
         shadow-camera-left={-30}
         shadow-camera-right={30}
         shadow-camera-top={20}
         shadow-camera-bottom={-20}
       />
-      <pointLight position={[0, 4, 6]} intensity={20} distance={20} color="#ff7a9a" />
+      {/* クールなリムライト（奥から） */}
+      <directionalLight position={[-8, 5, -10]} intensity={0.55} color="#5a78ff" />
+      <pointLight position={[cx, 4, 6]} intensity={22} distance={22} color="#ff6a8a" />
 
-      {/* 奈落の床 */}
+      {/* 奈落の床（うっすら反射感） */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.4, 0]} receiveShadow>
-        <planeGeometry args={[200, 60]} />
-        <meshStandardMaterial color="#0a0a12" roughness={1} />
+        <planeGeometry args={[400, 80]} />
+        <meshStandardMaterial color="#090910" roughness={0.45} metalness={0.5} />
       </mesh>
 
       <Paths />
       {BOARD.map((sq) => (
-        <Tile3D
-          key={sq.id}
-          sq={sq}
-          isCurrent={sq.id === currentSquareId}
-          isOption={branchOptions.includes(sq.id)}
-        />
+        <Tile3D key={sq.id} sq={sq} isCurrent={sq.id === currentSquareId} isOption={branchOptions.includes(sq.id)} />
       ))}
       <Pawn3D id={currentSquareId} />
+      <Dust around={cx} />
       <CameraRig id={currentSquareId} />
 
-      <EffectComposer multisampling={0} enabled={!isMobile || true}>
+      <EffectComposer multisampling={0}>
         {!isMobile ? <SMAA /> : <></>}
-        <Bloom intensity={0.9} luminanceThreshold={0.5} luminanceSmoothing={0.85} mipmapBlur radius={0.6} />
-        <Vignette eskil={false} offset={0.2} darkness={0.85} />
+        <Bloom intensity={1.15} luminanceThreshold={0.45} luminanceSmoothing={0.85} mipmapBlur radius={0.7} />
+        <Vignette eskil={false} offset={0.18} darkness={0.9} />
       </EffectComposer>
     </>
   );
@@ -214,7 +261,7 @@ interface BoardProps {
 }
 
 export function Board3D({ currentSquareId, branchOptions }: BoardProps) {
-  const startPos = worldPosById('s0');
+  const startPos = worldPosById(currentSquareId);
   const cur = BOARD_BY_ID[currentSquareId];
   return (
     <div className="board3d">
@@ -222,12 +269,11 @@ export function Board3D({ currentSquareId, branchOptions }: BoardProps) {
         shadows
         dpr={isMobile ? [1, 1.5] : [1, 2]}
         camera={{ position: [startPos[0] - 1.5, 7.5, 9.5], fov: 45 }}
-        gl={{ antialias: false, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.1 }}
+        gl={{ antialias: false, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.12 }}
       >
         <Scene currentSquareId={currentSquareId} branchOptions={branchOptions} />
       </Canvas>
 
-      {/* 現在地ラベル（HUD） */}
       <div className="board3d-hud">
         <span className="hud-icon">{TYPE_3D[cur.type].icon}</span>
         <span className="hud-title">{cur.title}</span>
