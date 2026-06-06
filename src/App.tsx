@@ -1,7 +1,7 @@
 import { Suspense, lazy } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { useGame } from './hooks/useGame';
-import { ageLabel, phaseForTurn } from './game/engine';
+import { ageLabel, nextLockedAreaInfo, phaseById } from './game/engine';
 import { startBgm } from './audio/bgm';
 import { StatusPanel } from './components/StatusPanel';
 import { CastPanel } from './components/CastPanel';
@@ -47,6 +47,8 @@ export default function App() {
     );
   }
 
+  const lockedInfo = nextLockedAreaInfo(state);
+
   return (
     <div className="game-shell">
       <div className="topbar">
@@ -54,7 +56,12 @@ export default function App() {
           🤘 METAL ROAD
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-          <span className="phase-chip">{phaseForTurn(state.turn).name}</span>
+          <span className="phase-chip">{phaseById(state.phaseId).name}</span>
+          {lockedInfo && (
+            <span className="unlock-chip" title="次のエリアを解放する条件">
+              🔒 {lockedInfo.name}：{lockedInfo.need}
+            </span>
+          )}
           <span style={{ fontSize: 14, color: 'var(--muted)' }}>
             📅 {state.turn}/{state.maxTurns}　{ageLabel(state.turn)}
           </span>
@@ -71,7 +78,7 @@ export default function App() {
 
       <div className="stage">
         <Suspense fallback={<div className="board3d-loading">🤘 3D盤面を読み込み中…</div>}>
-          <Board3D currentSquareId={state.currentSquareId} branchOptions={state.branchOptions} />
+          <Board3D currentSquareId={state.currentSquareId} branchOptions={state.branchOptions} unlockedAreas={state.unlockedAreas} />
         </Suspense>
 
         <AnimatePresence>

@@ -1,9 +1,16 @@
-import type { CharacterState, Effect, Ending, GameEvent, GameState, Member } from '../types';
+import type { AreaId, CharacterState, Effect, Ending, GameEvent, GameState, Member, UnlockReq } from '../types';
 import { BOARD_BY_ID, START_SQUARE_ID } from '../data/board';
 import { EVENTS } from '../data/events';
 import { ENDINGS } from '../data/endings';
 import { calculateRank } from '../data/venues';
-import { CHARACTERS, INITIAL_MEMBER_IDS, INITIAL_MET_IDS, phaseForTurn } from '../data/characters';
+import {
+  AREA_ORDER,
+  CHARACTERS,
+  INITIAL_MEMBER_IDS,
+  INITIAL_MET_IDS,
+  phaseById,
+  phaseForTurn,
+} from '../data/characters';
 
 // ===== チューニング用定数 =====
 export const CONFIG = {
@@ -47,6 +54,7 @@ export function createInitialState(): GameState {
     turn: 1,
     maxTurns: CONFIG.MAX_TURNS,
     phaseId: 'meet',
+    unlockedAreas: ['meet'],
     currentSquareId: START_SQUARE_ID,
     prevSquareId: null,
     phase: 'title',
@@ -210,4 +218,52 @@ export function squareById(id: string) {
   return BOARD_BY_ID[id];
 }
 
-export { phaseForTurn };
+// ===== エリア解放（関所） =====
+
+/** 解放条件をすべて満たすか。 */
+export function meetsUnlock(stats: GameState['stats'], req?: UnlockReq): boolean {
+  if (!req) return true;
+  if (req.fans != null && stats.fans < req.fans) return false;
+  if (req.skill != null && stats.skill < req.skill) return false;
+  if (req.morale != null && stats.morale < req.morale) return false;
+  if (req.money != null && stats.money < req.money) return false;
+  return true;
+}
+
+/** あるエリアに入れるか（解放済み or 今ステータスで条件を満たす）。 */
+export function canEnterArea(state: GameState, area: AreaId): boolean {
+  if (state.unlockedAreas.includes(area)) return true;
+  const def = phaseById(area);
+  return meetsUnlock(state.stats, def.unlock);
+}
+
+/** 現在ステータスで新たに解放できるエリアを解放し、ログを残す（破壊的）。 */
+export function refreshUnlocks(state: GameState): void {
+  for (const area of AREA_ORDER) {
+    if (state.unlockedAreas.includes(area)) continue;
+    const def = phaseById(area);
+    if (meetsUnlock(state.stats, def.unlock)) {
+      state.unlockedAreas.push(area);
+      pushLog(state, `🚪 新エリア解放！「${def.name}」へ進めるようになった`);
+    }
+  }
+}
+
+/** 次に未解放のエリアと、その不足条件の説明（HUD用）。無ければ null。 */
+export function nextLockedAreaInfo(state: GameState): { name: string; need: string } | null {
+  for (const area of AREA_ORDER) {
+    if (state.unlockedAreas.includes(area)) continue;
+    const def = phaseById(area);
+    const req = def.unlock;
+    if (!req) continue;
+    const parts: string[] = [];
+    if (req.fans != null) parts.push(`🔥ファン${req.fans.toLocaleString()}`);
+    if (req.skill != null) parts.push(`🎸スキル${req.skill}`);
+    if (req.morale != null) parts.push(`🤝士気${req.morale}`);
+    if (req.money != null) parts.push(`💰¥${req.money.toLocaleString()}`);
+    return { name: def.name, need: parts.join(' / ') };
+  }
+  return null;
+}
+
+export { phaseForTurn, phaseById };

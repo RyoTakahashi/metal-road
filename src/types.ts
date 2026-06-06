@@ -47,19 +47,34 @@ export interface CharacterState {
   active: boolean;
 }
 
-// ===== フェーズ（10年＝120ターンを4期に分割） =====
+// ===== エリア（マップを地続きの4ゾーンに分割） =====
+// 経過年ではなく「実力（解放条件）」で次エリアへ進める。
+// id は従来の PhaseId を流用（meet=下積み, grow=駆け出し, expand=飛躍, mend=頂点）。
 
 export type PhaseId = 'meet' | 'grow' | 'expand' | 'mend';
+/** エリアID（PhaseId のエイリアス。地続きゾーン） */
+export type AreaId = PhaseId;
+
+/** 次エリアへ進むための解放条件（満たすべき下限値）。 */
+export interface UnlockReq {
+  fans?: number;
+  skill?: number;
+  morale?: number;
+  money?: number;
+}
 
 export interface PhaseDef {
   id: PhaseId;
   /** 表示名 */
   name: string;
-  /** このフェーズが始まるターン（1始まり、含む） */
-  startTurn: number;
   /** 説明（プレイヤー向けの狙い） */
   hint: string;
-  /** このフェーズで出やすいイベントカテゴリの重み */
+  /**
+   * このエリアに「入る」ための解放条件（meet は初期エリアなので無し）。
+   * 直前エリアからの関所で判定する。
+   */
+  unlock?: UnlockReq;
+  /** このエリアで出やすいイベントカテゴリの重み */
   weights: Partial<Record<EventCategory, number>>;
 }
 
@@ -207,6 +222,8 @@ export interface Square {
    * イベントを抽選する。固定 eventId があればそちらを優先。
    */
   category?: EventCategory;
+  /** このマスが属するエリア（地続きゾーン）。境界の関所判定に使う。 */
+  area: AreaId;
   /** 隣接マス（双方向グラフ）。複数なら方向選択。 */
   next: string[];
   /** 分岐時に各 next を説明するラベル（next と同じ順序） */
@@ -260,8 +277,10 @@ export interface GameState {
   cast: Record<string, CharacterState>;
   turn: number;
   maxTurns: number;
-  /** 現在のフェーズ id（turn から導出） */
+  /** 現在いるエリア（現在マスの area から導出。イベント抽選・表示に使う） */
   phaseId: PhaseId;
+  /** 解放済みエリア（関所を越えて入れるようになったエリア集合） */
+  unlockedAreas: AreaId[];
   currentSquareId: string;
   /** 直前にいたマス（引き返し時に来た方向を除外するためのヒント。任意） */
   prevSquareId: string | null;

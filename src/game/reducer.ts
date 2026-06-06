@@ -1,10 +1,12 @@
 import type { GameState } from '../types';
 import {
   applyEffect,
+  canEnterArea,
   checkGameOver,
   CONFIG,
   createInitialState,
-  phaseForTurn,
+  phaseById,
+  refreshUnlocks,
   resolveFinale,
   rollDiceValue,
   squareById,
@@ -26,8 +28,9 @@ function clone(state: GameState): GameState {
   return structuredClone(state);
 }
 
-/** イベント結果適用後に呼ぶ：途中敗退（ステータス枯渇）の判定。 */
+/** イベント結果適用後に呼ぶ：エリア解放の更新＋途中敗退（ステータス枯渇）の判定。 */
 function settleAfterEffect(s: GameState): void {
+  refreshUnlocks(s); // ステータス変化で新エリアが解放されたら反映
   const over = checkGameOver(s);
   if (over) {
     s.ending = over;
@@ -37,13 +40,33 @@ function settleAfterEffect(s: GameState): void {
 }
 
 /**
- * 移動方向の候補。来た道（直前のマス）へ引き返す選択肢は除外する。
- * 除外した結果が空になる行き止まりのときだけ、来た道を許可して戻れるようにする。
+ * 移動方向の候補。
+ * - 未解放エリアへ踏み込む辺（関所）は除外する（条件を満たすまで進めない）。
+ * - 来た道（直前のマス）へ引き返す選択肢は除外する。
+ * - すべて塞がれた場合は、まず関所だけ緩めて来た道で戻れるようにする。
  */
 function moveOptions(s: GameState): string[] {
   const cur = squareById(s.currentSquareId);
-  const forward = cur.next.filter((id) => id !== s.prevSquareId);
-  return forward.length > 0 ? forward : cur.next;
+  // 関所: 行き先マスのエリアに入れるもののみ
+  const enterable = cur.next.filter((id) => canEnterArea(s, squareById(id).area));
+  // 引き返し除外
+  const forward = enterable.filter((id) => id !== s.prevSquareId);
+  if (forward.length > 0) return forward;
+  if (enterable.length > 0) return enterable; // 戻るしかない場合は来た道を許可
+  // 全方向が未解放（理論上ほぼ無いが保険）：引き返しのみ許可
+  return cur.next.filter((id) => id === s.prevSquareId).length > 0
+    ? [s.prevSquareId as string]
+    : cur.next;
+}
+
+/** 現在マスのエリアを phaseId に反映し、章が変わったらログ（破壊的）。 */
+function syncArea(s: GameState): void {
+  const area = squareById(s.currentSquareId).area;
+  if (area !== s.phaseId) {
+    s.phaseId = area;
+    const def = phaseById(area);
+    s.log = [`🎬 「${def.name}」に足を踏み入れた ―― ${def.hint}`, ...s.log].slice(0, 60);
+  }
 }
 
 /** ターン終了処理：活動費→敗退判定→ターン進行→フェーズ更新→10年でフィナーレ。 */
@@ -63,7 +86,6 @@ function finalizeTurn(s: GameState): void {
     return;
   }
 
-  const prevTurn = s.turn;
   s.turn += 1;
 
   // 10年（120ターン）経過でフィナーレ
@@ -72,19 +94,12 @@ function finalizeTurn(s: GameState): void {
     return;
   }
 
-  // フェーズ更新（章が変わったらログ）
-  const ph = phaseForTurn(s.turn);
-  if (ph.id !== s.phaseId) {
-    s.phaseId = ph.id;
-    s.log = [`🎬 ${ph.name} ―― ${ph.hint}`, ...s.log].slice(0, 60);
-  }
-  void prevTurn;
-
   s.phase = 'idle';
 }
 
-/** マスに到達したときの解決（イベント抽選）。 */
+/** マスに到達したときの解決（エリア同期→イベント抽選）。 */
 function arrive(s: GameState): void {
+  syncArea(s);
   const cur = squareById(s.currentSquareId);
   const ev = pickEventForSquare(cur, s);
   if (!ev) {

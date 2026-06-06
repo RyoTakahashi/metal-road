@@ -1,4 +1,4 @@
-import type { EventCategory, Square, SquareType } from '../types';
+import type { AreaId, EventCategory, Square, SquareType } from '../types';
 
 /**
  * 桃鉄型の自由移動マップ。
@@ -45,6 +45,14 @@ function layoutMask(): boolean[][] {
   return m;
 }
 
+// 列でエリアを4分割（左→右へ上位）。11列を 0-2 / 3-5 / 6-8 / 9-10 に割当て。
+function areaForCol(c: number): AreaId {
+  if (c <= 2) return 'meet';
+  if (c <= 5) return 'grow';
+  if (c <= 8) return 'expand';
+  return 'mend';
+}
+
 const CATEGORY_CYCLE: EventCategory[] = [
   'encounter',
   'practice',
@@ -57,15 +65,21 @@ const CATEGORY_CYCLE: EventCategory[] = [
 
 // 拠点（特別マス）: 座標(r,c) と種別・固定イベント
 const LANDMARKS: { r: number; c: number; type: SquareType; title: string; category: EventCategory; eventId?: string }[] = [
+  // 第1章 ガレージ（c 0-2）
   { r: 0, c: 0, type: 'start', title: 'ガレージ（拠点）', category: 'encounter' },
-  { r: 0, c: 5, type: 'live', title: 'ライブハウス', category: 'live' },
-  { r: 0, c: 10, type: 'member', title: 'スタジオ', category: 'practice' },
-  { r: 3, c: 0, type: 'event', title: 'レコード店', category: 'promo' },
+  { r: 3, c: 0, type: 'rest', title: '河川敷', category: 'relation' },
+  { r: 6, c: 0, type: 'member', title: '練習スタジオ', category: 'practice' },
+  // 第2章 ライブハウス街（c 3-5）
+  { r: 0, c: 3, type: 'live', title: 'ライブハウス', category: 'live' },
   { r: 3, c: 3, type: 'random', title: '繁華街', category: 'chance' },
+  { r: 6, c: 5, type: 'live', title: '対バン会場', category: 'live' },
+  // 第3章 メディア街（c 6-8）
+  { r: 0, c: 7, type: 'event', title: 'レコード店', category: 'promo' },
   { r: 3, c: 7, type: 'event', title: 'ラジオ局', category: 'promo' },
-  { r: 3, c: 10, type: 'rest', title: '河川敷', category: 'relation' },
-  { r: 6, c: 0, type: 'live', title: 'フェス会場', category: 'live' },
-  { r: 6, c: 5, type: 'event', title: 'TV局', category: 'promo' },
+  { r: 6, c: 7, type: 'event', title: 'TV局', category: 'promo' },
+  // 第4章 アリーナ（c 9-10）
+  { r: 0, c: 10, type: 'live', title: 'アリーナ', category: 'live' },
+  { r: 3, c: 10, type: 'live', title: 'フェス会場', category: 'live' },
   { r: 6, c: 10, type: 'member', title: 'メンバーの溜まり場', category: 'relation' },
 ];
 
@@ -93,6 +107,7 @@ function buildBoard(): Square[] {
       title: lm?.title ?? '',
       eventId: lm?.eventId,
       category: cat,
+      area: areaForCol(c),
       next: [],
       x: OX + c * GAP_X,
       y: OY + r * GAP_Y,

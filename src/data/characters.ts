@@ -1,4 +1,4 @@
-import type { Character, PhaseDef } from '../types';
+import type { Character, PhaseDef, PhaseId } from '../types';
 
 /**
  * 登場人物（友好度を持つキャスト）。
@@ -50,39 +50,50 @@ export const INITIAL_MET_IDS = ['yu', 'take', 'ryo', 'gen'];
 export const PHASES: PhaseDef[] = [
   {
     id: 'meet',
-    name: '第1章 出会い（1年目）',
-    startTurn: 1,
+    name: '第1章 ガレージ ―― 出会い',
     hint: '仲間や人脈を広げる時期。出会いのマスが多い。',
+    // 初期エリア。解放条件なし。
     weights: { encounter: 5, practice: 2, live: 1, relation: 2, chance: 2, trouble: 1, promo: 0.5 },
   },
   {
     id: 'grow',
-    name: '第2章 下積み（2〜4年目）',
-    startTurn: 13,
+    name: '第2章 ライブハウス街 ―― 下積み',
     hint: '方向性とスキルを磨く時期。練習とライブが中心。',
+    // スキルを磨いた者だけが次の舞台へ。
+    unlock: { skill: 35 },
     weights: { practice: 5, live: 4, encounter: 2, relation: 2, trouble: 2, chance: 2, promo: 1 },
   },
   {
     id: 'expand',
-    name: '第3章 飛躍（5〜8年目）',
-    startTurn: 49,
+    name: '第3章 メディア街 ―― 飛躍',
     hint: 'ファンを増やす時期。宣伝・メディア・大型ライブ。',
+    // 一定の知名度（ファン）を得て飛躍の舞台へ。
+    unlock: { fans: 6000, skill: 70 },
     weights: { promo: 5, live: 4, chance: 3, practice: 2, relation: 2, trouble: 2, encounter: 1 },
   },
   {
     id: 'mend',
-    name: '第4章 円熟（9〜10年目）',
-    startTurn: 97,
+    name: '第4章 アリーナ ―― 頂点',
     hint: '人間関係を整える時期。絆を深め、集大成へ。',
+    // 大舞台に立つには、ファン・資金ともに十分であること。
+    unlock: { fans: 30000, money: 10000 },
     weights: { relation: 5, live: 3, promo: 2, trouble: 2, practice: 2, chance: 2, encounter: 1 },
   },
 ];
 
-/** ターンから現在フェーズを返す。 */
-export function phaseForTurn(turn: number): PhaseDef {
-  let cur = PHASES[0];
-  for (const p of PHASES) {
-    if (turn >= p.startTurn) cur = p;
-  }
-  return cur;
+export const PHASE_BY_ID: Record<PhaseId, PhaseDef> = Object.fromEntries(
+  PHASES.map((p) => [p.id, p]),
+) as Record<PhaseId, PhaseDef>;
+
+/** エリアの順序（地続きの並び）。 */
+export const AREA_ORDER: PhaseId[] = ['meet', 'grow', 'expand', 'mend'];
+
+/** エリア定義を返す。 */
+export function phaseById(id: PhaseId): PhaseDef {
+  return PHASE_BY_ID[id];
+}
+
+/** 後方互換: ターンからの推定は廃止し、常に初期エリアを返す（呼び出し側は area を使う）。 */
+export function phaseForTurn(_turn: number): PhaseDef {
+  return PHASES[0];
 }

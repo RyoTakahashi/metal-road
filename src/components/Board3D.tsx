@@ -3,7 +3,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { EffectComposer, Bloom, Vignette, SMAA } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import { BOARD, BOARD_BY_ID } from '../data/board';
-import type { Square } from '../types';
+import type { AreaId, Square } from '../types';
 import { Metalhead } from '../three/Metalhead';
 import { EmojiSprite } from '../three/sprites';
 import { Monuments } from './Monuments';
@@ -30,37 +30,45 @@ function PulseRing({ color, current }: { color: string; current?: boolean }) {
   );
 }
 
-function Tile3D({ sq, isCurrent, isOption }: { sq: Square; isCurrent: boolean; isOption: boolean }) {
+function Tile3D({ sq, isCurrent, isOption, locked }: { sq: Square; isCurrent: boolean; isOption: boolean; locked: boolean }) {
   const style = TYPE_3D[sq.type];
   const [x, , z] = worldPos(sq);
   const isGoal = sq.type === 'goal';
+  // 未解放エリアのタイルは暗くして「まだ行けない」感を出す
+  const baseColor = locked ? '#15151c' : style.color;
+  const emissive = locked ? '#000000' : style.emissive;
+  const topEmissive = locked ? 0 : 0.15;
+  const sideEmissive = locked ? 0 : isCurrent ? 0.9 : 0.28;
   return (
     <group position={[x, 0, z]}>
       {/* 台座（六角柱・ローポリ） */}
       <mesh castShadow receiveShadow position={[0, TILE.height / 2, 0]}>
         <cylinderGeometry args={[TILE.radius, TILE.radius * 0.86, TILE.height, 6]} />
         <meshStandardMaterial
-          color={style.color}
+          color={baseColor}
           flatShading
-          roughness={0.4}
-          metalness={0.35}
-          emissive={style.emissive}
-          emissiveIntensity={isCurrent ? 0.9 : 0.28}
+          roughness={locked ? 0.9 : 0.4}
+          metalness={locked ? 0.1 : 0.35}
+          emissive={emissive}
+          emissiveIntensity={sideEmissive}
         />
       </mesh>
       {/* 天面（少しグロッシー） */}
       <mesh position={[0, TILE.height + 0.015, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <circleGeometry args={[TILE.radius * 0.82, 6]} />
-        <meshStandardMaterial color={style.color} metalness={0.5} roughness={0.25} emissive={style.emissive} emissiveIntensity={0.15} flatShading />
+        <meshStandardMaterial color={baseColor} metalness={0.5} roughness={0.25} emissive={emissive} emissiveIntensity={topEmissive} flatShading />
       </mesh>
-      {/* 天面の発光縁取り */}
+      {/* 天面の発光縁取り（未解放は暗いグレー） */}
       <mesh position={[0, TILE.height + 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[TILE.radius * 0.78, TILE.radius * 0.98, 6]} />
-        <meshBasicMaterial color={style.emissive} toneMapped={false} side={THREE.DoubleSide} />
+        <meshBasicMaterial color={locked ? '#33333c' : style.emissive} toneMapped={false} side={THREE.DoubleSide} />
       </mesh>
 
-      {isOption && <PulseRing color={style.emissive} />}
-      {isCurrent && <PulseRing color={style.emissive} current />}
+      {!locked && isOption && <PulseRing color={style.emissive} />}
+      {!locked && isCurrent && <PulseRing color={style.emissive} current />}
+
+      {/* 未解放マスには 🔒 を浮かべる */}
+      {locked && <EmojiSprite emoji="🔒" position={[0, TILE.height + 0.9, 0]} scale={0.9} />}
 
       {/* ゴールはアーチを立てる */}
       {isGoal && (
@@ -80,7 +88,7 @@ function Tile3D({ sq, isCurrent, isOption }: { sq: Square; isCurrent: boolean; i
         </group>
       )}
 
-      <EmojiSprite emoji={style.icon} position={[0, TILE.height + 1.0, 0]} scale={1.2} />
+      {!locked && <EmojiSprite emoji={style.icon} position={[0, TILE.height + 1.0, 0]} scale={1.2} />}
     </group>
   );
 }
@@ -208,7 +216,7 @@ function Dust({ around }: { around: number }) {
   );
 }
 
-function Scene({ currentSquareId, branchOptions }: BoardProps) {
+function Scene({ currentSquareId, branchOptions, unlockedAreas }: BoardProps) {
   const cur = BOARD_BY_ID[currentSquareId];
   const [cx] = worldPos(cur);
   return (
@@ -243,7 +251,13 @@ function Scene({ currentSquareId, branchOptions }: BoardProps) {
       <Paths />
       <Monuments />
       {BOARD.map((sq) => (
-        <Tile3D key={sq.id} sq={sq} isCurrent={sq.id === currentSquareId} isOption={branchOptions.includes(sq.id)} />
+        <Tile3D
+          key={sq.id}
+          sq={sq}
+          isCurrent={sq.id === currentSquareId}
+          isOption={branchOptions.includes(sq.id)}
+          locked={!unlockedAreas.includes(sq.area)}
+        />
       ))}
       <Pawn3D id={currentSquareId} />
       <Dust around={cx} />
@@ -261,9 +275,10 @@ function Scene({ currentSquareId, branchOptions }: BoardProps) {
 interface BoardProps {
   currentSquareId: string;
   branchOptions: string[];
+  unlockedAreas: AreaId[];
 }
 
-export function Board3D({ currentSquareId, branchOptions }: BoardProps) {
+export function Board3D({ currentSquareId, branchOptions, unlockedAreas }: BoardProps) {
   const startPos = worldPosById(currentSquareId);
   const cur = BOARD_BY_ID[currentSquareId];
   return (
@@ -274,7 +289,7 @@ export function Board3D({ currentSquareId, branchOptions }: BoardProps) {
         camera={{ position: [startPos[0], 21, startPos[2] + 18], fov: 45 }}
         gl={{ antialias: false, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.12 }}
       >
-        <Scene currentSquareId={currentSquareId} branchOptions={branchOptions} />
+        <Scene currentSquareId={currentSquareId} branchOptions={branchOptions} unlockedAreas={unlockedAreas} />
       </Canvas>
 
       <div className="board3d-hud">
