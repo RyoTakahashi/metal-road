@@ -5,6 +5,8 @@
 
 let ctx: AudioContext | null = null;
 let enabled = true;
+/** SE のマスター音量（0..1）。1 が現状の最大音量。 */
+let masterVol = 1;
 
 function ac(): AudioContext {
   if (!ctx) {
@@ -21,6 +23,14 @@ export function isSfxEnabled() {
   return enabled;
 }
 
+/** SE 音量を 0..1 で設定（1 = 最大）。 */
+export function setSfxVolume(v: number) {
+  masterVol = Math.max(0, Math.min(1, v));
+}
+export function getSfxVolume() {
+  return masterVol;
+}
+
 interface ToneOptions {
   freq: number;
   duration: number;
@@ -32,7 +42,8 @@ interface ToneOptions {
 }
 
 function tone({ freq, duration, type = 'sawtooth', gain = 0.15, toFreq, delay = 0 }: ToneOptions) {
-  if (!enabled) return;
+  if (!enabled || masterVol <= 0) return;
+  gain *= masterVol;
   const c = ac();
   const t0 = c.currentTime + delay;
   const osc = c.createOscillator();
@@ -62,7 +73,8 @@ function tone({ freq, duration, type = 'sawtooth', gain = 0.15, toFreq, delay = 
 }
 
 function noise(duration: number, gain = 0.2) {
-  if (!enabled) return;
+  if (!enabled || masterVol <= 0) return;
+  gain *= masterVol;
   const c = ac();
   const t0 = c.currentTime;
   const buffer = c.createBuffer(1, c.sampleRate * duration, c.sampleRate);

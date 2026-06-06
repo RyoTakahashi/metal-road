@@ -168,43 +168,50 @@ export type MonumentKind =
   | 'horns'; // メロイックサイン(🤘)の石像
 
 export interface MonumentSpot {
-  /** 2D盤面座標（worldPos と同じ系） */
+  /** 2D盤面座標（worldPos と同じ系）。クラスタ中心。 */
   x: number;
   y: number;
   kind: MonumentKind;
   /** 見た目のばらつき用 */
   rot: number;
+  /** ベース倍率（2×2クラスタを埋める大型サイズ） */
   scale: number;
 }
 
-/** 道に囲まれた空きセルの中心にモニュメントを配置する。 */
+/**
+ * 道に囲まれた「2×2の空き地ブロック」を探し、その中央に大型モニュメントを1体置く。
+ * マス1つと同サイズだと紛らわしいので、4マスぶんの空間を1体で占有する。
+ */
 function buildMonuments(): MonumentSpot[] {
   const mask = layoutMask();
   const spots: MonumentSpot[] = [];
   const kinds: MonumentKind[] = ['amp_stack', 'flying_v', 'skull', 'pillar', 'drum', 'horns'];
+  const used: boolean[][] = Array.from({ length: ROWS }, () => Array(COLS).fill(false));
   let k = 0;
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
-      if (mask[r][c]) continue; // 道のセルは除外
-      // 周囲4セルのうち1つ以上が道（＝道に囲まれた内側の空間）なら置く
-      const around = [
-        [r - 1, c],
-        [r + 1, c],
-        [r, c - 1],
-        [r, c + 1],
-      ].some(([nr, nc]) => nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS && mask[nr][nc]);
-      if (!around) continue;
-      // 疑似乱数（座標ベースで決定的に）
-      const seed = (r * 7 + c * 13) % 100;
-      spots.push({
-        x: OX + c * GAP_X,
-        y: OY + r * GAP_Y,
-        kind: kinds[k++ % kinds.length],
-        rot: ((seed % 8) / 8) * Math.PI * 2,
-        scale: 0.85 + (seed % 5) * 0.07,
-      });
+
+  const isEmpty = (r: number, c: number) =>
+    r >= 0 && r < ROWS && c >= 0 && c < COLS && !mask[r][c] && !used[r][c];
+
+  // 2×2の空きブロックを優先配置（左上原点で走査、重複しないよう used を立てる）
+  for (let r = 0; r < ROWS - 1; r++) {
+    for (let c = 0; c < COLS - 1; c++) {
+      if (isEmpty(r, c) && isEmpty(r, c + 1) && isEmpty(r + 1, c) && isEmpty(r + 1, c + 1)) {
+        used[r][c] = used[r][c + 1] = used[r + 1][c] = used[r + 1][c + 1] = true;
+        // 4セルの中央
+        const cx = OX + (c + 0.5) * GAP_X;
+        const cy = OY + (r + 0.5) * GAP_Y;
+        const seed = (r * 7 + c * 13) % 100;
+        spots.push({
+          x: cx,
+          y: cy,
+          kind: kinds[k++ % kinds.length],
+          rot: ((seed % 8) / 8) * Math.PI * 2,
+          scale: 2.0 + (seed % 4) * 0.12, // 4マスを埋める大型
+        });
+      }
     }
   }
+
   return spots;
 }
 

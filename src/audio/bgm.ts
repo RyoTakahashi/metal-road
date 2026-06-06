@@ -19,13 +19,16 @@ export const TRACKS: BgmTrack[] = [
   { id: 'dice', title: 'Rolling Dice or Dead', src: `${BASE}audio/rolling-dice.mp3` },
 ];
 
-const DEFAULT_VOLUME = 0.28;
+/** BGM の実最大音量（スライダー 1.0 のときの HTMLAudioElement.volume）。 */
+const MAX_VOLUME = 0.28;
 
 let audio: HTMLAudioElement | null = null;
 let enabled = true;
 let started = false;
 let index = 0;
-let volume = DEFAULT_VOLUME;
+/** スライダー値 0..1（1 = 最大 = MAX_VOLUME）。 */
+let level = 1;
+let volume = MAX_VOLUME;
 /** 曲が変わったときに UI へ通知するためのリスナー。 */
 const listeners = new Set<(track: BgmTrack) => void>();
 
@@ -118,9 +121,14 @@ export function onTrackChange(fn: (track: BgmTrack) => void): () => void {
   return () => listeners.delete(fn);
 }
 
+/** BGM 音量をスライダー値 0..1 で設定（1 = 最大）。 */
 export function setBgmVolume(v: number) {
-  volume = Math.max(0, Math.min(1, v));
+  level = Math.max(0, Math.min(1, v));
+  volume = level * MAX_VOLUME;
   if (audio) audio.volume = volume;
+}
+export function getBgmVolume() {
+  return level;
 }
 
 /** まだ再生開始していなければ開始する（任意のユーザー操作にフックする用）。 */

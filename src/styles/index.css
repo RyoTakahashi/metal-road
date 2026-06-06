@@ -386,36 +386,115 @@ button {
   border: 1px solid #5a2630;
 }
 
-/* BGM コントロール（ON/OFF・曲送り・曲名） */
-.bgm-control {
-  display: inline-flex;
+/* 音量設定ポップオーバー */
+.vol-wrap {
+  position: relative;
+}
+.vol-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 40;
+  width: 270px;
+  padding: 14px;
+  background: linear-gradient(180deg, #1a1320, #16161f);
+  border: 1px solid #3a2630;
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+.vol-row {
+  display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 3px 8px 3px 4px;
+  gap: 10px;
+}
+.vol-toggle {
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
   border: 1px solid var(--line);
-  border-radius: 999px;
-  background: var(--panel);
+  background: var(--panel-2);
+  font-size: 18px;
+  cursor: pointer;
+  transition: background 0.15s;
 }
-.bgm-control .btn {
-  padding: 4px 8px;
-  border: none;
-  background: transparent;
-  font-size: 13px;
-  line-height: 1;
-}
-.bgm-control .btn:hover:not(:disabled) {
+.vol-toggle:hover {
   background: #2a2a38;
 }
-.bgm-toggle {
-  border-radius: 999px !important;
+.vol-main {
+  flex: 1;
 }
-.bgm-title {
+.vol-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.vol-val {
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+}
+.vol-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--blood-bright), #4a0710);
+  outline: none;
+  cursor: pointer;
+}
+.vol-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--blood);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+.vol-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--blood);
+}
+.vol-track {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 8px 0 0 48px;
+}
+.vol-track-name {
   font-size: 11px;
   color: var(--muted);
-  max-width: 150px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.vol-skip {
+  flex: 0 0 auto;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  color: var(--text);
+  border-radius: 7px;
+  padding: 3px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.vol-skip:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.vol-sep {
+  height: 1px;
+  background: var(--line);
+  margin: 12px 0;
 }
 .cast-list {
   display: flex;
