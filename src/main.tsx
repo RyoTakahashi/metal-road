@@ -56,10 +56,19 @@ if (slice === 'stage' || slice === 'badend') {
     : { id: 'morale' as const, title: '音楽性の違い ―― 不仲解散', text: '「もう一緒にはやれない」。積もり積もった衝突が爆発し、メンバーは一人また一人とスタジオを去っていった。残ったのは、誰のものでもなくなった曲だけ。', bad: true };
   const mockVenue = goal ? { rank: 'S', name: '日本武道館', capacity: 14000, minFans: 11000 } : null;
   const mockStats = goal ? { fans: 12400, skill: 62, morale: 70, money: 8200 } : { fans: 900, skill: 28, morale: 0, money: -1500 };
+  // プレビュー用のダミー友好度（高/中/低をひと通り）
+  const mockCast = {
+    take: { id: 'take', affinity: 88, met: true, active: true },
+    ryo: { id: 'ryo', affinity: 72, met: true, active: true },
+    shin: { id: 'shin', affinity: 60, met: true, active: true },
+    kuro: { id: 'kuro', affinity: 45, met: true, active: false },
+    rex: { id: 'rex', affinity: 30, met: true, active: false },
+    aki: { id: 'aki', affinity: 95, met: true, active: false },
+  } as never;
   root = (
     <Suspense fallback={fallback}>
       <div className="app">
-        <EndingScreen ending={mockEnding} venue={mockVenue} stats={mockStats} onRestart={() => location.reload()} />
+        <EndingScreen ending={mockEnding} venue={mockVenue} stats={mockStats} cast={mockCast} onRestart={() => location.reload()} />
       </div>
     </Suspense>
   );

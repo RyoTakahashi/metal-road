@@ -162,13 +162,14 @@ function Pawn3D({ id }: { id: string }) {
 function CameraRig({ id }: { id: string }) {
   const { camera } = useThree();
   const focus = useRef(new THREE.Vector3(...worldPosById(id)));
-  const off = isMobile ? new THREE.Vector3(-1.5, 9, 12) : new THREE.Vector3(-1.5, 7.5, 9.5);
+  // グリッドマップを俯瞰気味に見せる（高め＆引き）。コマ周辺を中心に追従。
+  const off = isMobile ? new THREE.Vector3(0, 24, 20) : new THREE.Vector3(0, 21, 18);
   useFrame(() => {
     const target = new THREE.Vector3(...worldPosById(id));
     focus.current.lerp(target, 0.08);
     const desired = new THREE.Vector3(focus.current.x + off.x, off.y, focus.current.z + off.z);
     camera.position.lerp(desired, 0.08);
-    camera.lookAt(focus.current.x + 2.2, 0.6, focus.current.z);
+    camera.lookAt(focus.current.x, 0.4, focus.current.z);
   });
   return null;
 }
@@ -212,7 +213,7 @@ function Scene({ currentSquareId, branchOptions }: BoardProps) {
   return (
     <>
       <color attach="background" args={['#060610']} />
-      <fog attach="fog" args={['#070713', 12, 40]} />
+      <fog attach="fog" args={['#070713', 30, 75]} />
 
       <ambientLight intensity={0.35} color="#5a5a7a" />
       <hemisphereLight intensity={0.3} color="#4a4a77" groundColor="#06060a" />
@@ -234,7 +235,7 @@ function Scene({ currentSquareId, branchOptions }: BoardProps) {
 
       {/* 奈落の床（うっすら反射感） */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.4, 0]} receiveShadow>
-        <planeGeometry args={[400, 80]} />
+        <planeGeometry args={[200, 200]} />
         <meshStandardMaterial color="#090910" roughness={0.45} metalness={0.5} />
       </mesh>
 
@@ -268,7 +269,7 @@ export function Board3D({ currentSquareId, branchOptions }: BoardProps) {
       <Canvas
         shadows
         dpr={isMobile ? [1, 1.5] : [1, 2]}
-        camera={{ position: [startPos[0] - 1.5, 7.5, 9.5], fov: 45 }}
+        camera={{ position: [startPos[0], 21, startPos[2] + 18], fov: 45 }}
         gl={{ antialias: false, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.12 }}
       >
         <Scene currentSquareId={currentSquareId} branchOptions={branchOptions} />

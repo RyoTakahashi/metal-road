@@ -1,10 +1,10 @@
 import type { Square, SquareType } from '../types';
 import { BOARD_BY_ID } from '../data/board';
 
-/** 2D盤面座標(x:80..4280, y:150/320/490) を 3D ワールド座標へ写像する。 */
-const SCALE = 0.022;
-const CX = 2180; // x 中央
-const CZ = 320; // y 中央（spine）
+/** 2D盤面座標(グリッド: x 130..2530, y 130..1510) を 3D ワールド座標へ写像する。 */
+const SCALE = 0.02;
+const CX = 1330; // x 中央
+const CZ = 820; // y 中央
 
 export function worldPos(sq: Square): [number, number, number] {
   return [(sq.x - CX) * SCALE, 0, (sq.y - CZ) * SCALE];

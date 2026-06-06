@@ -8,11 +8,11 @@ import { CHARACTERS, INITIAL_MEMBER_IDS, INITIAL_MET_IDS, phaseForTurn } from '.
 // ===== チューニング用定数 =====
 export const CONFIG = {
   MAX_TURNS: 120, // 20歳〜30歳の10年間（1ターン=1ヶ月）。経過でエンディング
-  DEBT_LIMIT: -15000, // これを下回るとゲームオーバー（借金まみれ）
+  DEBT_LIMIT: -20000, // これを下回るとゲームオーバー（借金まみれ）
   DICE_MAX: 6, // 1〜6 のサイコロ
   START_AGE: 20,
   MONTHS_PER_TURN: 1,
-  UPKEEP_MONEY: 120, // 毎ターンの活動費（家賃・スタジオ・食費）
+  UPKEEP_MONEY: 180, // 毎ターンの活動費（家賃・スタジオ・食費）。稼ぎとの綱引き
   UPKEEP_MORALE: 0, // 毎ターンの士気消耗（基本0。イベントで増減）
 };
 
@@ -41,7 +41,7 @@ function initialCast(): Record<string, CharacterState> {
 
 export function createInitialState(): GameState {
   return {
-    stats: { fans: 50, skill: 12, morale: 70, money: 4000 },
+    stats: { fans: 50, skill: 12, morale: 85, money: 6000 },
     members: INITIAL_MEMBER_IDS.map(memberFromChar),
     cast: initialCast(),
     turn: 1,
@@ -161,8 +161,6 @@ export function applyEffect(state: GameState, e: Effect): void {
       pushLog(state, `💔 ${target.name} が脱退した…`);
     }
   }
-  // メンバーが主人公だけになったら士気崩壊
-  if (state.members.length <= 1) state.stats.morale = 0;
 
   const summary = formatEffectSummary(e);
   if (summary) pushLog(state, `→ ${summary}`);
@@ -175,7 +173,9 @@ export function checkGameOver(state: GameState): Ending | null {
   const s = state.stats;
   if (s.fans <= 0) return ENDINGS.fans;
   if (s.skill <= 0) return ENDINGS.skill;
-  if (s.morale <= 0) return ENDINGS.morale;
+  // 士気は 0 でも即敗退にはしない（会場ランクの品質に響く）。
+  // メンバーが主人公だけになった＝バンド崩壊のときに不仲解散エンド。
+  if (state.members.length <= 1) return ENDINGS.morale;
   if (s.money <= CONFIG.DEBT_LIMIT) return ENDINGS.money;
   return null;
 }

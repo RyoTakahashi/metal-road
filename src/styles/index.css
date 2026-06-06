@@ -353,6 +353,114 @@ button {
   font-size: 11px;
 }
 
+/* ===== Cast / Affinity ===== */
+.phase-chip {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  color: #ffd9df;
+  background: linear-gradient(90deg, rgba(192, 17, 34, 0.5), rgba(74, 7, 16, 0.4));
+  border: 1px solid #5a2630;
+}
+.cast-list {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+.cast-row {
+  border-bottom: 1px dashed #24242e;
+  padding-bottom: 7px;
+}
+.cast-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.cast-name {
+  font-size: 13px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.cast-badge {
+  font-size: 9px;
+  font-weight: 800;
+  color: #0a0a0f;
+  background: var(--morale);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+.cast-aff {
+  font-size: 13px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.cast-sub {
+  font-size: 10px;
+  color: var(--muted);
+  margin: 1px 0 4px;
+}
+.cast-bar {
+  height: 6px;
+  background: #0c0c11;
+  border: 1px solid #000;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.cast-fill {
+  height: 100%;
+  border-radius: 6px;
+}
+
+/* ===== Epilogue（人物の後日談） ===== */
+.epilogue {
+  max-width: 640px;
+  width: 100%;
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+  background: rgba(8, 8, 14, 0.55);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px 18px;
+  max-height: 34vh;
+  overflow-y: auto;
+}
+.epilogue-head {
+  text-align: center;
+  color: var(--gold);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+.epilogue-line {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 5px 0;
+  border-bottom: 1px dashed #23232e;
+}
+.epilogue-name {
+  font-weight: 800;
+  font-size: 13px;
+  color: #fff;
+}
+.epilogue-text {
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: #cfcdd6;
+}
+
 /* ===== Title / Ending ===== */
 .center-screen {
   flex: 1;

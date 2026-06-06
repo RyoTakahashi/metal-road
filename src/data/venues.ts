@@ -5,12 +5,12 @@ import type { Stats, Venue } from '../types';
  * minFans の降順に並べておく。
  */
 export const VENUES: Venue[] = [
-  { rank: 'SS', name: '東京ドーム', capacity: 50000, minFans: 65000 },
-  { rank: 'S', name: '日本武道館', capacity: 14000, minFans: 42000 },
-  { rank: 'A', name: '横浜アリーナ', capacity: 10000, minFans: 24000 },
-  { rank: 'B', name: 'Zepp（ライブハウス大）', capacity: 3000, minFans: 10000 },
-  { rank: 'C', name: '市民ホール', capacity: 1500, minFans: 3500 },
-  { rank: 'D', name: 'ライブハウス（小箱）', capacity: 200, minFans: 900 },
+  { rank: 'SS', name: '東京ドーム', capacity: 50000, minFans: 130000 },
+  { rank: 'S', name: '日本武道館', capacity: 14000, minFans: 95000 },
+  { rank: 'A', name: '横浜アリーナ', capacity: 10000, minFans: 70000 },
+  { rank: 'B', name: 'Zepp（ライブハウス大）', capacity: 3000, minFans: 40000 },
+  { rank: 'C', name: '市民ホール', capacity: 1500, minFans: 15000 },
+  { rank: 'D', name: 'ライブハウス（小箱）', capacity: 200, minFans: 3000 },
   { rank: 'E', name: '路上ライブ', capacity: 30, minFans: 0 },
 ];
 
@@ -52,11 +52,11 @@ export function calculateRank(stats: Stats): RankResult {
   const potentialVenue = venueByFans(stats.fans);
   detail.push(`ファン数 ${stats.fans.toLocaleString()}人 → 上限「${potentialVenue.name}」`);
 
-  // 品質係数: スキルと士気の平均を 0〜1 に正規化（100 で満点）
-  const qualityFactor = Math.max(
-    0,
-    Math.min(1, (stats.skill + stats.morale) / 200),
-  );
+  // 品質係数: スキル（10年スケールで ~250 が満点目安）と士気（~120 で満点）を
+  // それぞれ正規化して平均。低いと会場を成立させられず格下げ。
+  const skillN = Math.min(1, stats.skill / 250);
+  const moraleN = Math.min(1, stats.morale / 120);
+  const qualityFactor = Math.max(0, Math.min(1, (skillN + moraleN) / 2));
 
   let venue = potentialVenue;
   let qualityDown = 0;
@@ -82,7 +82,7 @@ export function calculateRank(stats: Stats): RankResult {
   let fundsGated = false;
   const idx = VENUES.findIndex((v) => v.rank === venue.rank);
   const isBigVenue = idx <= 2; // SS / S / A
-  if (isBigVenue && stats.money < 3000) {
+  if (isBigVenue && stats.money < 20000) {
     venue = downgrade(venue, 1);
     fundsGated = true;
     detail.push(`資金不足（¥${stats.money.toLocaleString()}）で大箱を押さえられず1段格下げ`);

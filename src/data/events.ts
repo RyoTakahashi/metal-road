@@ -1,14 +1,18 @@
 import type { GameEvent } from '../types';
+import { CAST_EVENTS } from './eventsCast';
 
 /**
- * 全イベント定義。Square.eventId から参照される。
+ * 固定/汎用イベント定義。Square.eventId から参照される。
  * choices が空のものは autoEffects を即時適用する自動進行イベント。
  * scene は演出シーン（アニメ付きイラスト）の種別。
  */
-export const EVENTS: Record<string, GameEvent> = {
+const BASE_EVENTS: Record<string, GameEvent> = {
   // ===== 下積み =====
   street_live: {
     id: 'street_live',
+    category: 'live',
+    phases: ['meet', 'grow'],
+    weight: 1.8,
     title: '路上ライブ',
     scene: 'street',
     text: '駅前にアンプを担いで繰り出した。足を止めてくれる人はまばらだが、ここがすべての始まりだ。どう攻める？',
@@ -40,6 +44,9 @@ export const EVENTS: Record<string, GameEvent> = {
   },
   part_time_job: {
     id: 'part_time_job',
+    category: 'trouble',
+    phases: ['meet', 'grow'],
+    weight: 1.8,
     title: 'バイトで食いつなぐ',
     scene: 'trouble',
     text: '音楽だけでは食えない。引っ越しのバイトで体はボロボロだが、活動資金は確保した。',
@@ -54,6 +61,9 @@ export const EVENTS: Record<string, GameEvent> = {
   },
   demo_tape: {
     id: 'demo_tape',
+    category: 'practice',
+    phases: ['meet', 'grow'],
+    weight: 1.8,
     title: 'デモ音源づくり',
     scene: 'studio',
     text: '宅録でデモを制作。クオリティを取るか、勢いを取るか。',
@@ -79,6 +89,8 @@ export const EVENTS: Record<string, GameEvent> = {
   },
   first_livehouse: {
     id: 'first_livehouse',
+    category: 'live',
+    phases: ['meet', 'grow'],
     title: '初めてのライブハウス',
     scene: 'livehouse',
     text: 'ノルマ制の小箱。チケットを売り切れるか不安だが、初の「ステージ」だ。',
@@ -104,6 +116,8 @@ export const EVENTS: Record<string, GameEvent> = {
   },
   taiban: {
     id: 'taiban',
+    category: 'live',
+    phases: ['grow', 'expand'],
     title: '対バンライブ',
     scene: 'livehouse',
     text: '他のバンドと同じ舞台に。負けられない夜だ。',
@@ -131,6 +145,7 @@ export const EVENTS: Record<string, GameEvent> = {
   // ===== 分岐1: 実力派 =====
   rest_studio: {
     id: 'rest_studio',
+    category: 'practice',
     title: 'スタジオ合宿',
     scene: 'studio',
     text: '泊まり込みで曲作りと練習に没頭した。',
@@ -145,6 +160,8 @@ export const EVENTS: Record<string, GameEvent> = {
   },
   street_training: {
     id: 'street_training',
+    category: 'practice',
+    phases: ['meet', 'grow'],
     title: '路上で腕を磨く',
     scene: 'street',
     text: '初心を忘れず、再び路上へ。技術と度胸を鍛え直す。',
@@ -159,6 +176,8 @@ export const EVENTS: Record<string, GameEvent> = {
   },
   hall_concert: {
     id: 'hall_concert',
+    category: 'live',
+    phases: ['grow', 'expand'],
     title: '初のワンマンライブ',
     scene: 'livehouse',
     text: '初めてのワンマン。客席のキャパは埋まるか――。',
@@ -176,6 +195,7 @@ export const EVENTS: Record<string, GameEvent> = {
   // ===== 分岐1: バズ狙い =====
   sns_post: {
     id: 'sns_post',
+    category: 'promo',
     title: '渾身のSNS投稿',
     scene: 'sns',
     text: '演奏動画を投稿。バズるかは運次第だが、狙いにいく。',
@@ -201,6 +221,7 @@ export const EVENTS: Record<string, GameEvent> = {
   },
   sns_buzz: {
     id: 'sns_buzz',
+    category: 'promo',
     title: 'SNSでバズる',
     scene: 'sns',
     text: 'ライブ動画の切り抜きが拡散され、一晩で再生数が爆発した！',
@@ -215,6 +236,7 @@ export const EVENTS: Record<string, GameEvent> = {
   },
   flame: {
     id: 'flame',
+    category: 'trouble',
     title: '炎上',
     scene: 'flame',
     text: 'メンバーの過去の発言が掘り起こされ、ネットが炎上。認知度は上がったが対応を誤ると致命傷だ。どうする？',
@@ -248,6 +270,8 @@ export const EVENTS: Record<string, GameEvent> = {
   // ===== メンバー編成期 =====
   join_guitarist: {
     id: 'join_guitarist',
+    category: 'encounter',
+    phases: ['meet', 'grow'],
     title: '新メンバー加入：リードギター',
     scene: 'member',
     text: 'スタジオで超絶技巧のギタリストと出会った。「お前らの音、面白いな」と彼は笑った。',
@@ -277,6 +301,7 @@ export const EVENTS: Record<string, GameEvent> = {
   },
   member_conflict: {
     id: 'member_conflict',
+    category: 'relation',
     title: 'メンバー同士の衝突',
     scene: 'member',
     text: '音楽性をめぐってドラムとベースが大喧嘩。スタジオの空気は最悪だ。',
@@ -302,6 +327,8 @@ export const EVENTS: Record<string, GameEvent> = {
   },
   equipment_trouble: {
     id: 'equipment_trouble',
+    category: 'trouble',
+    weight: 1.8,
     title: '機材トラブル',
     scene: 'trouble',
     text: 'ライブ本番、アンプから煙が。応急処置でなんとか乗り切ったが出費がかさんだ。',
@@ -316,6 +343,8 @@ export const EVENTS: Record<string, GameEvent> = {
   },
   magazine: {
     id: 'magazine',
+    category: 'promo',
+    phases: ['grow', 'expand'],
     title: '音楽雑誌の取材',
     scene: 'press',
     text: 'メタル専門誌が取材に。誌面でどう見せる？',
@@ -341,6 +370,8 @@ export const EVENTS: Record<string, GameEvent> = {
   },
   ep_release: {
     id: 'ep_release',
+    category: 'practice',
+    phases: ['grow', 'expand'],
     title: '自主制作EPリリース',
     scene: 'studio',
     text: '初の音源を世に出す。手売りか、配信か。',
@@ -368,6 +399,8 @@ export const EVENTS: Record<string, GameEvent> = {
   // ===== 分岐2: インディーズ =====
   tv_offer: {
     id: 'tv_offer',
+    category: 'promo',
+    phases: ['grow', 'expand'],
     title: 'テレビ出演のオファー',
     scene: 'tv',
     text: '深夜の音楽番組から声がかかった。メタルバンドがお茶の間に映る数少ないチャンス。',
@@ -393,6 +426,8 @@ export const EVENTS: Record<string, GameEvent> = {
   },
   national_dist: {
     id: 'national_dist',
+    category: 'promo',
+    phases: ['grow', 'expand'],
     title: '全国流通リリース',
     scene: 'press',
     text: 'インディーズのまま全国流通へ。自由を貫く道。',
@@ -409,6 +444,7 @@ export const EVENTS: Record<string, GameEvent> = {
   // ===== 分岐2: メジャー =====
   contract_trouble: {
     id: 'contract_trouble',
+    category: 'trouble',
     title: '怪しい契約話',
     scene: 'contract',
     text: '「君たちを売り出す」と名乗る男が、うまい話を持ちかけてきた。',
@@ -434,6 +470,9 @@ export const EVENTS: Record<string, GameEvent> = {
   },
   major_tieup: {
     id: 'major_tieup',
+    category: 'promo',
+    phases: ['expand', 'mend'],
+    weight: 0.6,
     title: '大型タイアップ',
     scene: 'tv',
     text: 'メジャーの力でアニメ主題歌のタイアップが決定。一気に名が広がる。',
@@ -459,6 +498,8 @@ export const EVENTS: Record<string, GameEvent> = {
   },
   tour_start: {
     id: 'tour_start',
+    category: 'live',
+    phases: ['expand', 'mend'],
     title: '全国ツアー開始',
     scene: 'tour',
     text: 'ついに全国ツアーへ。各地のファンが待っている。',
@@ -475,6 +516,8 @@ export const EVENTS: Record<string, GameEvent> = {
   // ===== 全国期 =====
   fanmeeting: {
     id: 'fanmeeting',
+    category: 'relation',
+    phases: ['grow', 'expand'],
     title: 'ファンミーティング',
     scene: 'fans',
     text: 'コアファンとの交流会。サービスか、ストイックさか。',
@@ -500,6 +543,8 @@ export const EVENTS: Record<string, GameEvent> = {
   },
   member_leave: {
     id: 'member_leave',
+    category: 'relation',
+    phases: ['grow', 'expand', 'mend'],
     title: 'メンバー脱退の危機',
     scene: 'member',
     text: '「ついていけない」とメンバーの一人が脱退をほのめかしている。',
@@ -525,6 +570,8 @@ export const EVENTS: Record<string, GameEvent> = {
   },
   join_keys: {
     id: 'join_keys',
+    category: 'encounter',
+    phases: ['grow', 'expand'],
     title: '新メンバー加入：キーボード',
     scene: 'member',
     text: 'サポートで呼んだキーボーディストの腕が抜群だった。',
@@ -554,6 +601,8 @@ export const EVENTS: Record<string, GameEvent> = {
   },
   festival: {
     id: 'festival',
+    category: 'live',
+    phases: ['expand', 'mend'],
     title: '大型野外フェス出演',
     scene: 'festival',
     text: '大型フェスのメインステージ手前まで来た。大観衆の前で実力を示すときだ。',
@@ -581,6 +630,9 @@ export const EVENTS: Record<string, GameEvent> = {
   // ===== 分岐3: 海外 =====
   overseas_tour: {
     id: 'overseas_tour',
+    category: 'live',
+    phases: ['expand', 'mend'],
+    weight: 0.6,
     title: '海外ツアー',
     scene: 'overseas',
     text: '本場のメタルシーンへ殴り込み。言葉は通じなくても、音は通じる。',
@@ -606,6 +658,9 @@ export const EVENTS: Record<string, GameEvent> = {
   },
   reverse_import: {
     id: 'reverse_import',
+    category: 'promo',
+    phases: ['expand', 'mend'],
+    weight: 0.6,
     title: '逆輸入で話題に',
     scene: 'press',
     text: '海外での評価が日本に逆輸入され、国内が再注目。',
@@ -622,6 +677,9 @@ export const EVENTS: Record<string, GameEvent> = {
   // ===== 分岐3: 国内大箱 =====
   arena_first: {
     id: 'arena_first',
+    category: 'live',
+    phases: ['expand', 'mend'],
+    weight: 0.6,
     title: 'アリーナ初挑戦',
     scene: 'arena',
     text: '国内のアリーナクラスに初挑戦。埋められるか、勝負だ。',
@@ -647,6 +705,9 @@ export const EVENTS: Record<string, GameEvent> = {
   },
   documentary: {
     id: 'documentary',
+    category: 'promo',
+    phases: ['expand', 'mend'],
+    weight: 0.6,
     title: '密着ドキュメンタリー',
     scene: 'tv',
     text: 'これまでの軌跡を追ったドキュメンタリーが放送される。',
@@ -663,6 +724,8 @@ export const EVENTS: Record<string, GameEvent> = {
   // ===== 直前 =====
   pre_final: {
     id: 'pre_final',
+    category: 'practice',
+    phases: ['expand', 'mend'],
     title: '集大成ライブ前夜',
     scene: 'studio',
     text: '最大の舞台を前に、最後の調整。仲間と過ごす静かな夜。',
@@ -677,6 +740,8 @@ export const EVENTS: Record<string, GameEvent> = {
   },
   final_practice: {
     id: 'final_practice',
+    category: 'practice',
+    phases: ['expand', 'mend'],
     title: '最後の追い込み',
     scene: 'studio',
     text: '本番直前。やれることはすべてやる。',
@@ -701,3 +766,6 @@ export const EVENTS: Record<string, GameEvent> = {
     ],
   },
 };
+
+/** 固定/汎用イベント＋登場人物イベントを統合した全イベント。 */
+export const EVENTS: Record<string, GameEvent> = { ...BASE_EVENTS, ...CAST_EVENTS };

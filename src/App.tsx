@@ -1,11 +1,11 @@
 import { Suspense, lazy, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { useGame } from './hooks/useGame';
-import { ageLabel } from './game/engine';
+import { ageLabel, phaseForTurn } from './game/engine';
 import { setSfxEnabled } from './audio/sfx';
 import { setBgmEnabled, startBgm } from './audio/bgm';
 import { StatusPanel } from './components/StatusPanel';
-import { MemberList } from './components/MemberList';
+import { CastPanel } from './components/CastPanel';
 import { LogPanel } from './components/LogPanel';
 import { Controls } from './components/Controls';
 import { EventModal } from './components/EventModal';
@@ -54,6 +54,7 @@ export default function App() {
           ending={state.ending}
           venue={state.reachedVenue}
           stats={state.stats}
+          cast={state.cast}
           onRestart={restart}
         />
       </div>
@@ -66,9 +67,10 @@ export default function App() {
         <span className="metal-title" style={{ fontSize: 22 }}>
           🤘 METAL ROAD
         </span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          <span className="phase-chip">{phaseForTurn(state.turn).name}</span>
           <span style={{ fontSize: 14, color: 'var(--muted)' }}>
-            📅 ターン {state.turn}/{state.maxTurns}　|　{ageLabel(state.turn)}
+            📅 {state.turn}/{state.maxTurns}　{ageLabel(state.turn)}
           </span>
           <button className="btn" style={{ padding: '6px 12px' }} onClick={toggleBgm}>
             {bgm ? '🎵 BGM ON' : '🎵 BGM OFF'}
@@ -82,7 +84,7 @@ export default function App() {
       <div className="sidebar">
         <Controls dice={state.dice} phase={state.phase} onRoll={roll} />
         <StatusPanel stats={state.stats} />
-        <MemberList members={state.members} />
+        <CastPanel cast={state.cast} />
         <LogPanel log={state.log} />
       </div>
 

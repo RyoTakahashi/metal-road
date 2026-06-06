@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
-import type { Ending, Stats, Venue } from '../types';
+import type { Ending, GameState, Stats, Venue } from '../types';
+import { buildEpilogues } from '../data/epilogues';
 
 // エンディング背景は事前レンダリングのポスター（成功＝歓声のステージ／失敗＝雨の寂寥）
 const STAGE_POSTER = `${import.meta.env.BASE_URL}posters/stage.jpg`;
@@ -9,11 +10,16 @@ interface Props {
   ending: Ending;
   venue: Venue | null;
   stats: Stats;
+  cast: GameState['cast'];
   onRestart: () => void;
 }
 
-export function EndingScreen({ ending, venue, stats, onRestart }: Props) {
+const TIER_ICON = { high: '🌟', mid: '🤝', low: '🍂' } as const;
+
+export function EndingScreen({ ending, venue, stats, cast, onRestart }: Props) {
   const isGoal = !ending.bad;
+  // 成功フィナーレ（10年経過）のときだけ人物エピローグを見せる
+  const epilogues = isGoal ? buildEpilogues({ cast } as GameState) : [];
 
   return (
     <div className="screen3d">
@@ -80,6 +86,31 @@ export function EndingScreen({ ending, venue, stats, onRestart }: Props) {
           <span>🤝 士気 {stats.morale}</span>
           <span>💰 ¥{stats.money.toLocaleString()}</span>
         </motion.div>
+
+        {epilogues.length > 0 && (
+          <motion.div
+            className="epilogue"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.9 }}
+          >
+            <div className="epilogue-head">― それぞれの、その後 ―</div>
+            {epilogues.map((e, i) => (
+              <motion.div
+                key={e.charId}
+                className="epilogue-line"
+                initial={{ opacity: 0, x: -12 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 1.0 + i * 0.15 }}
+              >
+                <span className="epilogue-name">
+                  {TIER_ICON[e.tier]} {e.name}
+                </span>
+                <span className="epilogue-text">{e.text}</span>
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
 
         <motion.button
           className="btn btn-primary"
