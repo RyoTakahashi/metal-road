@@ -314,6 +314,26 @@ button {
   padding: 12px 14px;
   line-height: 1.5;
 }
+.branch-choice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.branch-dir {
+  flex: 0 0 auto;
+  font-weight: 800;
+  font-size: 13px;
+  color: var(--gold);
+  background: #0e0e14;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 4px 9px;
+  min-width: 56px;
+  text-align: center;
+}
+.branch-dest {
+  font-weight: 700;
+}
 .result-box {
   background: #0e0e14;
   border: 1px solid var(--line);
