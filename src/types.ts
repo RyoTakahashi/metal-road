@@ -14,6 +14,65 @@ export interface Stats {
 
 export type StatKey = keyof Stats;
 
+// ===== キャラクター & 友好度 =====
+
+/** 登場人物の役割カテゴリ。 */
+export type CastRole = 'band' | 'producer' | 'rival' | 'media' | 'fan' | 'support';
+
+/** 友好度を持つ登場人物。 */
+export interface Character {
+  id: string;
+  name: string;
+  role: CastRole;
+  /** 肩書き・担当（例: "Drums" / "敏腕プロデューサー"） */
+  title: string;
+  /** 一言プロフィール */
+  bio: string;
+  /** 3Dアバター用: 楽器（バンドのみ） */
+  instrument?: 'vocal' | 'guitar' | 'bass' | 'drums' | 'keys';
+  /** アバターの髪色 */
+  hair: string;
+  /** バンドの正規メンバーか（ロスター扱い） */
+  isMember?: boolean;
+}
+
+/** ゲーム中の各キャラの状態（友好度・在籍）。 */
+export interface CharacterState {
+  id: string;
+  /** 友好度 0..100 */
+  affinity: number;
+  /** 登場済み（出会ったか） */
+  met: boolean;
+  /** バンドに在籍中か（メンバーのみ意味を持つ） */
+  active: boolean;
+}
+
+// ===== フェーズ（10年＝120ターンを4期に分割） =====
+
+export type PhaseId = 'meet' | 'grow' | 'expand' | 'mend';
+
+export interface PhaseDef {
+  id: PhaseId;
+  /** 表示名 */
+  name: string;
+  /** このフェーズが始まるターン（1始まり、含む） */
+  startTurn: number;
+  /** 説明（プレイヤー向けの狙い） */
+  hint: string;
+  /** このフェーズで出やすいイベントカテゴリの重み */
+  weights: Partial<Record<EventCategory, number>>;
+}
+
+/** イベントのカテゴリ（マス種別＆フェーズ抽選に使う）。 */
+export type EventCategory =
+  | 'encounter' // 出会い・人脈
+  | 'practice' // スキル磨き
+  | 'live' // ライブ
+  | 'promo' // 宣伝・マーケ
+  | 'relation' // 人間関係
+  | 'trouble' // トラブル
+  | 'chance'; // ランダム・幸運
+
 /** イベント演出シーンの種類（アニメ付きイラストの出し分け）。 */
 export type SceneKind =
   | 'street'
@@ -58,6 +117,12 @@ export interface Effect {
   addMember?: Member;
   /** メンバーを脱退させる。'random' でランダムに1人 */
   removeMember?: string | 'random';
+  /** キャラの友好度変化 { charId: delta }。met=false のキャラは met=true になる */
+  affinity?: Record<string, number>;
+  /** このキャラをバンドに加入させる（character id） */
+  recruit?: string;
+  /** このキャラをバンドから脱退させる（character id） */
+  depart?: string;
   /** ログに残す追加メッセージ */
   note?: string;
 }
@@ -102,6 +167,22 @@ export interface GameEvent {
   autoResultScene?: SceneKind;
   /** 演出シーン種別（既定） */
   scene: SceneKind;
+
+  // ===== 抽選・分岐メタデータ（自由移動マップ用） =====
+  /** イベントのカテゴリ（マス種別と対応） */
+  category?: EventCategory;
+  /** このイベントが出現しうるフェーズ（未指定なら全フェーズ） */
+  phases?: PhaseId[];
+  /** 主に関係する登場人物（演出/友好度条件に使用） */
+  charId?: string;
+  /** 出現条件: このキャラの友好度が min 以上 */
+  requireAffinityMin?: { charId: string; min: number };
+  /** 出現条件: このキャラと出会っている／いない */
+  requireMet?: { charId: string; met: boolean };
+  /** 1ゲームで一度だけ出現する（出会い・加入など） */
+  once?: boolean;
+  /** 抽選の基礎重み（未指定は1） */
+  weight?: number;
 }
 
 export type SquareType =
@@ -119,9 +200,14 @@ export interface Square {
   id: string;
   type: SquareType;
   title: string;
-  /** 紐づくイベント id（type に応じて） */
+  /** 紐づくイベント id（固定イベントマスの場合） */
   eventId?: string;
-  /** 次のマス。1つなら直進、複数なら分岐選択 */
+  /**
+   * マスのカテゴリ。自由移動マップでは、止まったマスのカテゴリ×現在フェーズで
+   * イベントを抽選する。固定 eventId があればそちらを優先。
+   */
+  category?: EventCategory;
+  /** 隣接マス（双方向グラフ）。複数なら方向選択。 */
   next: string[];
   /** 分岐時に各 next を説明するラベル（next と同じ順序） */
   branchLabels?: string[];
@@ -170,9 +256,15 @@ export type GamePhase =
 export interface GameState {
   stats: Stats;
   members: Member[];
+  /** 全登場人物の友好度・在籍状態 */
+  cast: Record<string, CharacterState>;
   turn: number;
   maxTurns: number;
+  /** 現在のフェーズ id（turn から導出） */
+  phaseId: PhaseId;
   currentSquareId: string;
+  /** 直前にいたマス（引き返し時に来た方向を除外するためのヒント。任意） */
+  prevSquareId: string | null;
   phase: GamePhase;
   dice: number | null;
   /** 残り移動マス数（移動アニメ用） */
@@ -183,9 +275,11 @@ export interface GameState {
   eventResult: string | null;
   /** 分岐の選択肢（next の square id 配列） */
   branchOptions: string[];
+  /** 一度きりイベントの消費済み id 集合 */
+  usedOnce: string[];
   /** 確定したエンディング */
   ending: Ending | null;
-  /** ゴール時の到達会場 */
+  /** 終了時の到達会場（ランク） */
   reachedVenue: Venue | null;
   /** 行動ログ（新しいものが先頭） */
   log: string[];

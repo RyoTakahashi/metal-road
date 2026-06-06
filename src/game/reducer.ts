@@ -4,11 +4,12 @@ import {
   checkGameOver,
   CONFIG,
   createInitialState,
-  getEvent,
-  resolveGoal,
+  phaseForTurn,
+  resolveFinale,
   rollDiceValue,
   squareById,
 } from './engine';
+import { pickEventForSquare } from './eventPicker';
 
 export type Action =
   | { type: 'START' }
@@ -25,7 +26,7 @@ function clone(state: GameState): GameState {
   return structuredClone(state);
 }
 
-/** イベント結果適用後に呼ぶ：ゲームオーバー判定。 */
+/** イベント結果適用後に呼ぶ：途中敗退（ステータス枯渇）の判定。 */
 function settleAfterEffect(s: GameState): void {
   const over = checkGameOver(s);
   if (over) {
@@ -35,21 +36,22 @@ function settleAfterEffect(s: GameState): void {
   }
 }
 
-/** ターン終了処理：ターンを進めてタイムアップ判定。 */
+/** 移動方向の候補（直前のマスへ戻る選択も許可＝自由移動）。 */
+function moveOptions(s: GameState): string[] {
+  const cur = squareById(s.currentSquareId);
+  return cur.next;
+}
+
+/** ターン終了処理：活動費→敗退判定→ターン進行→フェーズ更新→10年でフィナーレ。 */
 function finalizeTurn(s: GameState): void {
   s.activeEvent = null;
   s.eventResult = null;
   if (s.phase === 'ended') return;
 
-  // 毎ターンの活動費・疲弊（資金/士気への継続的な圧力）
-  s.stats.money -= CONFIG.UPKEEP_MONEY;
-  s.stats.morale = Math.max(0, s.stats.morale - CONFIG.UPKEEP_MORALE);
-  s.log = [
-    `📅 今月の活動費 -¥${CONFIG.UPKEEP_MONEY.toLocaleString()}（士気-${CONFIG.UPKEEP_MORALE}）`,
-    ...s.log,
-  ].slice(0, 50);
+  // 毎ターンの活動費（資金への継続的な圧力）
+  if (CONFIG.UPKEEP_MONEY) s.stats.money -= CONFIG.UPKEEP_MONEY;
+  if (CONFIG.UPKEEP_MORALE) s.stats.morale = Math.max(0, s.stats.morale - CONFIG.UPKEEP_MORALE);
 
-  // 活動費で枯渇したらゲームオーバー
   const over = checkGameOver(s);
   if (over) {
     s.ending = over;
@@ -57,37 +59,35 @@ function finalizeTurn(s: GameState): void {
     return;
   }
 
+  const prevTurn = s.turn;
   s.turn += 1;
+
+  // 10年（120ターン）経過でフィナーレ
   if (s.turn > s.maxTurns) {
-    s.ending = {
-      id: 'timeup',
-      title: '実家へ ―― 家業を継ぐということ',
-      text: '気づけば30歳。夢を追いかけるには、人生は少しだけ現実的すぎた。彼は楽器をしまい、実家の暖簾をくぐる。それでも時々、ふと口ずさむメロディがある。',
-      bad: true,
-    };
-    s.phase = 'ended';
+    resolveFinale(s);
     return;
   }
+
+  // フェーズ更新（章が変わったらログ）
+  const ph = phaseForTurn(s.turn);
+  if (ph.id !== s.phaseId) {
+    s.phaseId = ph.id;
+    s.log = [`🎬 ${ph.name} ―― ${ph.hint}`, ...s.log].slice(0, 60);
+  }
+  void prevTurn;
+
   s.phase = 'idle';
 }
 
-/** マスに到達したときの解決（イベント/分岐/ゴール）。 */
+/** マスに到達したときの解決（イベント抽選）。 */
 function arrive(s: GameState): void {
   const cur = squareById(s.currentSquareId);
-  if (cur.type === 'goal' || cur.next.length === 0) {
-    resolveGoal(s);
-    return;
-  }
-  if (cur.type === 'branch') {
-    s.phase = 'branch';
-    s.branchOptions = cur.next;
-    return;
-  }
-  const ev = getEvent(cur.eventId);
+  const ev = pickEventForSquare(cur, s);
   if (!ev) {
     finalizeTurn(s);
     return;
   }
+  if (ev.once) s.usedOnce = [...s.usedOnce, ev.id];
   s.activeEvent = ev;
   s.eventResult = null;
   s.phase = 'event';
@@ -122,26 +122,22 @@ export function reducer(state: GameState, action: Action): GameState {
     case 'STEP': {
       if (state.phase !== 'moving') return state;
       const s = clone(state);
-      const cur = squareById(s.currentSquareId);
 
-      // ゴール到達（next なし）
-      if (cur.next.length === 0) {
-        resolveGoal(s);
-        return s;
-      }
-      // 残り0 → 着地解決
+      // 残り0 → 着地してイベント解決
       if (s.stepsRemaining <= 0) {
         arrive(s);
         return s;
       }
-      // 分岐点を通過するには方向選択が必要
-      if (cur.next.length > 1) {
+      // 自由移動：毎マス方向を選ぶ（候補が2つ以上なら必ず選択させる）
+      const opts = moveOptions(s);
+      if (opts.length > 1) {
         s.phase = 'branch';
-        s.branchOptions = cur.next;
+        s.branchOptions = opts;
         return s;
       }
-      // 直進
-      s.currentSquareId = cur.next[0];
+      // 一本道は自動で進む
+      s.prevSquareId = s.currentSquareId;
+      s.currentSquareId = opts[0];
       s.stepsRemaining -= 1;
       return s;
     }
@@ -149,6 +145,7 @@ export function reducer(state: GameState, action: Action): GameState {
     case 'CHOOSE_BRANCH': {
       if (state.phase !== 'branch') return state;
       const s = clone(state);
+      s.prevSquareId = s.currentSquareId;
       s.currentSquareId = action.targetId;
       s.branchOptions = [];
       if (s.stepsRemaining > 0) {

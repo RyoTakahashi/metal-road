@@ -47,14 +47,14 @@ function run(seed: number) {
   let s = createInitialState();
   let guard = 0;
   const visited = new Set<string>();
-  while (s.phase !== 'ended' && guard < 500) {
+  while (s.phase !== 'ended' && guard < 5000) {
     const a = autoChoose(s);
     if (!a) break;
     s = reducer(s, a);
     visited.add(s.currentSquareId);
     guard++;
   }
-  return { ending: s.ending?.id, rank: s.reachedVenue?.rank, turn: s.turn, square: s.currentSquareId, steps: guard, visited: visited.size };
+  return { ending: s.ending?.id, rank: s.reachedVenue?.rank, turn: s.turn, square: s.currentSquareId, steps: guard, visited: visited.size, stats: s.stats, met: Object.values(s.cast).filter((c) => c.met).length };
 }
 
 void rollDiceValue;

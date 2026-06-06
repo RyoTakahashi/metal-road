@@ -1,43 +1,64 @@
-import type { Effect, Ending, GameEvent, GameState, Member } from '../types';
+import type { CharacterState, Effect, Ending, GameEvent, GameState, Member } from '../types';
 import { BOARD_BY_ID, START_SQUARE_ID } from '../data/board';
 import { EVENTS } from '../data/events';
-import { ENDINGS, goalEnding } from '../data/endings';
+import { ENDINGS } from '../data/endings';
 import { calculateRank } from '../data/venues';
+import { CHARACTERS, INITIAL_MEMBER_IDS, INITIAL_MET_IDS, phaseForTurn } from '../data/characters';
 
 // ===== チューニング用定数 =====
 export const CONFIG = {
-  MAX_TURNS: 60, // この回数までにゴールしないとタイムアップ（長距離盤面）
-  DEBT_LIMIT: -12000, // これを下回るとゲームオーバー（借金まみれ）
+  MAX_TURNS: 120, // 20歳〜30歳の10年間（1ターン=1ヶ月）。経過でエンディング
+  DEBT_LIMIT: -15000, // これを下回るとゲームオーバー（借金まみれ）
   DICE_MAX: 6, // 1〜6 のサイコロ
   START_AGE: 20,
-  MONTHS_PER_TURN: 2,
-  UPKEEP_MONEY: 350, // 毎ターンの活動費（家賃・スタジオ・食費。長距離なので低め）
-  UPKEEP_MORALE: 1, // 毎ターンの士気消耗（活動の疲弊）
+  MONTHS_PER_TURN: 1,
+  UPKEEP_MONEY: 120, // 毎ターンの活動費（家賃・スタジオ・食費）
+  UPKEEP_MORALE: 0, // 毎ターンの士気消耗（基本0。イベントで増減）
 };
 
-/** 初期メンバー（弱小バンドからのスタート） */
-const INITIAL_MEMBERS: Member[] = [
-  { id: 'p', name: 'ユウ（主人公）', role: 'Vo & Gt', skill: 10 },
-  { id: 'd0', name: 'タケ', role: 'Drums', skill: 8 },
-  { id: 'b0', name: 'リョウ', role: 'Bass', skill: 7 },
-];
+/** バンドの正規メンバー Member を Character から生成。 */
+function memberFromChar(id: string): Member {
+  const c = CHARACTERS.find((ch) => ch.id === id)!;
+  return { id: c.id, name: c.name, role: c.title, skill: 8 };
+}
+
+/** 全キャラの初期状態（友好度・出会い・在籍）を作る。 */
+function initialCast(): Record<string, CharacterState> {
+  const cast: Record<string, CharacterState> = {};
+  for (const c of CHARACTERS) {
+    const met = INITIAL_MET_IDS.includes(c.id);
+    const active = INITIAL_MEMBER_IDS.includes(c.id);
+    cast[c.id] = {
+      id: c.id,
+      // 初期メンバーは友好度高め、出会い済みは中程度、未登場は0
+      affinity: active ? 60 : met ? 40 : 0,
+      met,
+      active,
+    };
+  }
+  return cast;
+}
 
 export function createInitialState(): GameState {
   return {
     stats: { fans: 50, skill: 12, morale: 70, money: 4000 },
-    members: INITIAL_MEMBERS.map((m) => ({ ...m })),
+    members: INITIAL_MEMBER_IDS.map(memberFromChar),
+    cast: initialCast(),
     turn: 1,
     maxTurns: CONFIG.MAX_TURNS,
+    phaseId: 'meet',
     currentSquareId: START_SQUARE_ID,
+    prevSquareId: null,
     phase: 'title',
     dice: null,
     stepsRemaining: 0,
     activeEvent: null,
     eventResult: null,
     branchOptions: [],
+    usedOnce: [],
     ending: null,
     reachedVenue: null,
-    log: ['——— METAL ROAD ——— 0からのバンド成功物語'],
+    log: ['——— METAL ROAD ——— 0からのバンド成功物語', '20歳の春。10年後、お前はどこのステージに立っている？'],
   };
 }
 
@@ -56,7 +77,7 @@ export function rollDiceValue(): number {
 // ===== 効果の適用 =====
 
 function pushLog(state: GameState, msg: string): void {
-  state.log = [msg, ...state.log].slice(0, 50);
+  state.log = [msg, ...state.log].slice(0, 60);
 }
 
 function formatEffectSummary(e: Effect): string {
@@ -68,6 +89,8 @@ function formatEffectSummary(e: Effect): string {
   return parts.join(' / ');
 }
 
+const charName = (id: string) => CHARACTERS.find((c) => c.id === id)?.name ?? id;
+
 /** 効果を state に適用（破壊的）。state は事前に複製しておくこと。 */
 export function applyEffect(state: GameState, e: Effect): void {
   const s = state.stats;
@@ -76,12 +99,54 @@ export function applyEffect(state: GameState, e: Effect): void {
   s.morale = Math.max(0, s.morale + (e.morale ?? 0));
   s.money = s.money + (e.money ?? 0);
 
+  // 友好度変化（met も更新）
+  if (e.affinity) {
+    for (const [id, delta] of Object.entries(e.affinity)) {
+      const cs = state.cast[id];
+      if (!cs) continue;
+      if (!cs.met) {
+        cs.met = true;
+        pushLog(state, `🤝 ${charName(id)} と出会った`);
+      }
+      const before = cs.affinity;
+      cs.affinity = Math.max(0, Math.min(100, cs.affinity + delta));
+      if (delta !== 0) {
+        pushLog(state, `　${charName(id)} との友好度 ${delta > 0 ? '+' : ''}${delta}（${cs.affinity}）`);
+      }
+      void before;
+    }
+  }
+
+  // 加入（character ベース）
+  if (e.recruit) {
+    const cs = state.cast[e.recruit];
+    if (cs && !cs.active) {
+      cs.active = true;
+      cs.met = true;
+      cs.affinity = Math.max(cs.affinity, 55);
+      if (!state.members.find((m) => m.id === e.recruit)) {
+        state.members = [...state.members, memberFromChar(e.recruit)];
+      }
+      pushLog(state, `🎸 ${charName(e.recruit)} がバンドに加入！`);
+    }
+  }
+  // 脱退（character ベース）
+  if (e.depart) {
+    const cs = state.cast[e.depart];
+    if (cs && cs.active && e.depart !== 'yu') {
+      cs.active = false;
+      state.members = state.members.filter((m) => m.id !== e.depart);
+      pushLog(state, `💔 ${charName(e.depart)} がバンドを去った…`);
+    }
+  }
+
+  // 旧 addMember/removeMember 互換（character を使わないイベント用）
   if (e.addMember) {
     state.members = [...state.members, e.addMember];
     pushLog(state, `🎸 ${e.addMember.name}（${e.addMember.role}）が加入！`);
   }
   if (e.removeMember) {
-    const removable = state.members.filter((m) => m.id !== 'p');
+    const removable = state.members.filter((m) => m.id !== 'yu');
     if (removable.length > 0) {
       let target = removable[0];
       if (e.removeMember === 'random') {
@@ -91,18 +156,20 @@ export function applyEffect(state: GameState, e: Effect): void {
         if (found) target = found;
       }
       state.members = state.members.filter((m) => m.id !== target.id);
+      const cs = state.cast[target.id];
+      if (cs) cs.active = false;
       pushLog(state, `💔 ${target.name} が脱退した…`);
-      // メンバーが主人公1人だけになったら士気が崩壊
-      if (state.members.length <= 1) state.stats.morale = 0;
     }
   }
+  // メンバーが主人公だけになったら士気崩壊
+  if (state.members.length <= 1) state.stats.morale = 0;
 
   const summary = formatEffectSummary(e);
   if (summary) pushLog(state, `→ ${summary}`);
   if (e.note) pushLog(state, `　${e.note}`);
 }
 
-// ===== ゲームオーバー判定 =====
+// ===== ゲームオーバー判定（途中敗退） =====
 
 export function checkGameOver(state: GameState): Ending | null {
   const s = state.stats;
@@ -113,14 +180,20 @@ export function checkGameOver(state: GameState): Ending | null {
   return null;
 }
 
-// ===== ゴール処理 =====
+// ===== タイムアップ（10年経過）でのフィナーレ =====
 
-export function resolveGoal(state: GameState): void {
+export function resolveFinale(state: GameState): void {
   const result = calculateRank(state.stats);
   state.reachedVenue = result.venue;
-  state.ending = goalEnding(result.venue.name, result.venue.rank);
+  // エンディングの本文・エピローグは EndingScreen 側で会場＋友好度から構成する
+  state.ending = {
+    id: 'goal',
+    title: `10年の集大成 ―― ${result.venue.name}`,
+    text: `20歳の春に夢を見たあの日から、10年。たどり着いた最大の舞台は「${result.venue.name}」だった。`,
+    bad: false,
+  };
   state.phase = 'ended';
-  pushLog(state, `🏆 ゴール到達！ ${result.venue.name}（ランク${result.venue.rank}）`);
+  pushLog(state, `🏁 10年が経過。到達ランク ${result.venue.rank}（${result.venue.name}）`);
   result.detail.forEach((d) => pushLog(state, `　${d}`));
 }
 
@@ -132,3 +205,5 @@ export function getEvent(eventId: string | undefined): GameEvent | null {
 export function squareById(id: string) {
   return BOARD_BY_ID[id];
 }
+
+export { phaseForTurn };
