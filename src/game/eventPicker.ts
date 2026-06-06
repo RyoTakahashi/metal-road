@@ -4,7 +4,16 @@ import { phaseForTurn, PHASES } from '../data/characters';
 
 const ALL_EVENTS = Object.values(EVENTS);
 
-/** イベントが現在の状態で出現可能か（フェーズ・友好度・出会い・once 条件）。 */
+/** イベントの効果が「特定キャラの加入(recruit)」を含むなら、その charId を返す。 */
+function recruitTargetOf(ev: GameEvent): string | null {
+  if (ev.autoEffects?.recruit) return ev.autoEffects.recruit;
+  for (const c of ev.choices) {
+    if (c.effects.recruit) return c.effects.recruit;
+  }
+  return null;
+}
+
+/** イベントが現在の状態で出現可能か（フェーズ・友好度・出会い・once・加入済み 条件）。 */
 function isEligible(ev: GameEvent, state: GameState): boolean {
   if (ev.once && state.usedOnce.includes(ev.id)) return false;
   if (ev.phases && !ev.phases.includes(state.phaseId)) return false;
@@ -16,6 +25,10 @@ function isEligible(ev: GameEvent, state: GameState): boolean {
     const cs = state.cast[ev.requireAffinityMin.charId];
     if (!cs || cs.affinity < ev.requireAffinityMin.min) return false;
   }
+  // 加入イベントは、対象が既にバンドに在籍していたら出さない
+  // （代わりに該当キャラとの友好イベント等が抽選される）
+  const recruitId = recruitTargetOf(ev);
+  if (recruitId && state.cast[recruitId]?.active) return false;
   return true;
 }
 

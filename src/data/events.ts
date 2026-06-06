@@ -268,37 +268,6 @@ const BASE_EVENTS: Record<string, GameEvent> = {
   },
 
   // ===== メンバー編成期 =====
-  join_guitarist: {
-    id: 'join_guitarist',
-    category: 'encounter',
-    phases: ['meet', 'grow'],
-    title: '新メンバー加入：リードギター',
-    scene: 'member',
-    text: 'スタジオで超絶技巧のギタリストと出会った。「お前らの音、面白いな」と彼は笑った。',
-    intro: [
-      { text: '隣のスタジオから、信じられない速さのギターソロが漏れ聞こえてきた。三人は思わず壁に耳を当てる。', scene: 'studio' },
-      { text: '現れたのは、ニヤリと笑う長髪の男――シン。「お前らの音、粗いけど面白いな。俺が混ざったらもっと化けるぜ」', scene: 'member' },
-      { text: 'タケがユウに耳打ちする。「腕は本物だ。けど…今の三人の空気、壊れねえか?」 さあ、どうする?', scene: 'backstage' },
-    ],
-    choices: [
-      {
-        label: '迎え入れる',
-        resultText: 'シンのリードが加わった瞬間、音の壁が一段高くなった。厚みと速さ、そして毒。バンドは確かに、別の次元へ踏み出した。',
-        resultScene: 'member',
-        effects: {
-          skill: 12,
-          morale: 5,
-          addMember: { id: 'g1', name: 'シン', role: 'Lead Gt', skill: 18 },
-        },
-      },
-      {
-        label: '今のメンバーを大事にする',
-        resultText: 'ユウは静かに首を振った。「俺たちは三人で始めたバンドだ」 シンは肩をすくめて去り、残った三人の結束は前より固くなった。',
-        resultScene: 'member',
-        effects: { morale: 12 },
-      },
-    ],
-  },
   member_conflict: {
     id: 'member_conflict',
     category: 'relation',
@@ -567,37 +536,6 @@ const BASE_EVENTS: Record<string, GameEvent> = {
         resultText: '最後のライブで肩を組み、笑顔で送り出した。一人欠けた穴は痛いほど大きい。だが、残った者たちの覚悟は鋼のように固まった。',
         resultScene: 'fail',
         effects: { skill: -8, morale: -12, removeMember: 'random' },
-      },
-    ],
-  },
-  join_keys: {
-    id: 'join_keys',
-    category: 'encounter',
-    phases: ['grow', 'expand'],
-    title: '新メンバー加入：キーボード',
-    scene: 'member',
-    text: 'サポートで呼んだキーボーディストの腕が抜群だった。',
-    intro: [
-      { text: '新曲のレコーディングで、サポートにキーボーディストのマオを呼んだ。鍵盤に指が触れた瞬間、空気が変わった。', scene: 'studio' },
-      { text: '荘厳なシンセが、メタルの轟音に交響曲のような奥行きを与える。タケが息を呑んだ。「…なんだこの音。世界が広がった」', scene: 'member' },
-      { text: 'マオは控えめに笑う。「私でよければ…ずっと、この音に混ざりたい」 ユウは仲間と顔を見合わせた。どうする?', scene: 'backstage' },
-    ],
-    choices: [
-      {
-        label: '正式メンバーに誘う',
-        resultText: '「四人目、いや、五人目だ。一緒に来い」 マオの鍵盤が常に鳴るようになり、バンドの表現は別世界へと一気に広がった。',
-        resultScene: 'member',
-        effects: {
-          skill: 14,
-          morale: 6,
-          addMember: { id: 'k1', name: 'マオ', role: 'Keys', skill: 20 },
-        },
-      },
-      {
-        label: 'サポートのままにする',
-        resultText: '感謝を伝えつつ、コアの編成は変えなかった。身軽さこそ俺たちの武器――今のメンバーで、この戦場を駆け抜ける。',
-        resultScene: 'studio',
-        effects: { skill: 5, money: 1000 },
       },
     ],
   },

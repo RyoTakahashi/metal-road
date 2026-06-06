@@ -128,6 +128,10 @@ export function applyEffect(state: GameState, e: Effect): void {
         state.members = [...state.members, memberFromChar(e.recruit)];
       }
       pushLog(state, `🎸 ${charName(e.recruit)} がバンドに加入！`);
+    } else if (cs && cs.active) {
+      // 既に在籍済み：加入の代わりに友好を深める（保険）
+      cs.affinity = Math.min(100, cs.affinity + 10);
+      pushLog(state, `　${charName(e.recruit)} との絆が深まった（${cs.affinity}）`);
     }
   }
   // 脱退（character ベース）
