@@ -10,6 +10,11 @@ export function worldPos(sq: Square): [number, number, number] {
   return [(sq.x - CX) * SCALE, 0, (sq.y - CZ) * SCALE];
 }
 
+/** 生の2D盤面座標を 3D ワールド座標へ写像する（モニュメント配置用）。 */
+export function worldPos2D(x: number, y: number): [number, number, number] {
+  return [(x - CX) * SCALE, 0, (y - CZ) * SCALE];
+}
+
 export function worldPosById(id: string): [number, number, number] {
   const sq = BOARD_BY_ID[id];
   return sq ? worldPos(sq) : [0, 0, 0];

@@ -156,3 +156,56 @@ export const BOARD_VIEWBOX = {
   width: OX * 2 + (COLS - 1) * GAP_X,
   height: OY * 2 + (ROWS - 1) * GAP_Y,
 };
+
+// ===== 空き地（道に囲まれた空間）にモニュメントを置くための座標 =====
+
+export type MonumentKind =
+  | 'amp_stack' // 巨大アンプの壁
+  | 'flying_v' // 突き立った Flying-V ギターのモニュメント
+  | 'skull' // メタルなドクロ
+  | 'pillar' // 炎のかがり火/スピーカー塔
+  | 'drum' // 大ドラム
+  | 'horns'; // メロイックサイン(🤘)の石像
+
+export interface MonumentSpot {
+  /** 2D盤面座標（worldPos と同じ系） */
+  x: number;
+  y: number;
+  kind: MonumentKind;
+  /** 見た目のばらつき用 */
+  rot: number;
+  scale: number;
+}
+
+/** 道に囲まれた空きセルの中心にモニュメントを配置する。 */
+function buildMonuments(): MonumentSpot[] {
+  const mask = layoutMask();
+  const spots: MonumentSpot[] = [];
+  const kinds: MonumentKind[] = ['amp_stack', 'flying_v', 'skull', 'pillar', 'drum', 'horns'];
+  let k = 0;
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      if (mask[r][c]) continue; // 道のセルは除外
+      // 周囲4セルのうち1つ以上が道（＝道に囲まれた内側の空間）なら置く
+      const around = [
+        [r - 1, c],
+        [r + 1, c],
+        [r, c - 1],
+        [r, c + 1],
+      ].some(([nr, nc]) => nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS && mask[nr][nc]);
+      if (!around) continue;
+      // 疑似乱数（座標ベースで決定的に）
+      const seed = (r * 7 + c * 13) % 100;
+      spots.push({
+        x: OX + c * GAP_X,
+        y: OY + r * GAP_Y,
+        kind: kinds[k++ % kinds.length],
+        rot: ((seed % 8) / 8) * Math.PI * 2,
+        scale: 0.85 + (seed % 5) * 0.07,
+      });
+    }
+  }
+  return spots;
+}
+
+export const MONUMENTS: MonumentSpot[] = buildMonuments();

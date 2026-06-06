@@ -6,6 +6,7 @@ import { BOARD, BOARD_BY_ID } from '../data/board';
 import type { Square } from '../types';
 import { Metalhead } from '../three/Metalhead';
 import { EmojiSprite } from '../three/sprites';
+import { Monuments } from './Monuments';
 import { TILE, TYPE_3D, worldPos, worldPosById } from '../three/boardLayout';
 
 const isMobile = typeof window !== 'undefined' && window.innerWidth < 820;
@@ -240,6 +241,7 @@ function Scene({ currentSquareId, branchOptions }: BoardProps) {
       </mesh>
 
       <Paths />
+      <Monuments />
       {BOARD.map((sq) => (
         <Tile3D key={sq.id} sq={sq} isCurrent={sq.id === currentSquareId} isOption={branchOptions.includes(sq.id)} />
       ))}
