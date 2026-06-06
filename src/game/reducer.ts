@@ -36,10 +36,14 @@ function settleAfterEffect(s: GameState): void {
   }
 }
 
-/** 移動方向の候補（直前のマスへ戻る選択も許可＝自由移動）。 */
+/**
+ * 移動方向の候補。来た道（直前のマス）へ引き返す選択肢は除外する。
+ * 除外した結果が空になる行き止まりのときだけ、来た道を許可して戻れるようにする。
+ */
 function moveOptions(s: GameState): string[] {
   const cur = squareById(s.currentSquareId);
-  return cur.next;
+  const forward = cur.next.filter((id) => id !== s.prevSquareId);
+  return forward.length > 0 ? forward : cur.next;
 }
 
 /** ターン終了処理：活動費→敗退判定→ターン進行→フェーズ更新→10年でフィナーレ。 */
