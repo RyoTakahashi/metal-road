@@ -20,6 +20,7 @@ export const TRACKS: BgmTrack[] = [
   { id: 'cosmos', title: 'Isolated Cosmos', src: `${BASE}audio/isolated-cosmos.mp3` },
   { id: 'freedom', title: 'Freedom', src: `${BASE}audio/freedom.mp3` },
   { id: 'metropolis', title: 'Metropolis', src: `${BASE}audio/metropolis.mp3` },
+  { id: 'crimson', title: 'Crimson Horizon', src: `${BASE}audio/crimson-horizon.mp3` },
 ];
 
 /** BGM の実最大音量（スライダー 1.0 のときの HTMLAudioElement.volume）。 */
