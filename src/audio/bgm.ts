@@ -17,6 +17,9 @@ const BASE = import.meta.env.BASE_URL;
 export const TRACKS: BgmTrack[] = [
   { id: 'main', title: 'METAL ROAD (Main Theme)', src: `${BASE}audio/main-theme.mp3` },
   { id: 'dice', title: 'Rolling Dice or Dead', src: `${BASE}audio/rolling-dice.mp3` },
+  { id: 'cosmos', title: 'Isolated Cosmos', src: `${BASE}audio/isolated-cosmos.mp3` },
+  { id: 'freedom', title: 'Freedom', src: `${BASE}audio/freedom.mp3` },
+  { id: 'metropolis', title: 'Metropolis', src: `${BASE}audio/metropolis.mp3` },
 ];
 
 /** BGM の実最大音量（スライダー 1.0 のときの HTMLAudioElement.volume）。 */
