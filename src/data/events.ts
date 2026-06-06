@@ -545,6 +545,8 @@ const BASE_EVENTS: Record<string, GameEvent> = {
     id: 'member_leave',
     category: 'relation',
     phases: ['grow', 'expand', 'mend'],
+    once: true,
+    weight: 0.6,
     title: 'メンバー脱退の危機',
     scene: 'member',
     text: '「ついていけない」とメンバーの一人が脱退をほのめかしている。',
