@@ -61,6 +61,8 @@ export function createInitialState(): GameState {
     dice: null,
     stepsRemaining: 0,
     activeEvent: null,
+    activeLive: null,
+    liveCount: 0,
     eventResult: null,
     branchOptions: [],
     usedOnce: [],

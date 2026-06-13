@@ -17,6 +17,8 @@ function autoChoose(s: GameState): Action | null {
       return { type: 'STEP' };
     case 'branch':
       return { type: 'CHOOSE_BRANCH', targetId: s.branchOptions[Math.floor(Math.random() * s.branchOptions.length)] };
+    case 'live':
+      return { type: 'ACK_LIVE' };
     case 'event':
       if (!s.activeEvent) return null;
       if (s.eventResult !== null) return { type: 'ACK' };

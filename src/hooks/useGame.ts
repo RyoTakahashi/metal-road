@@ -37,6 +37,11 @@ export function useGame() {
     if (state.phase !== 'ended') endSoundPlayed.current = false;
   }, [state.phase, state.ending]);
 
+  // 定期ライブ開始のジャーン
+  useEffect(() => {
+    if (state.phase === 'live') sfx.live();
+  }, [state.phase, state.liveCount]);
+
   const start = useCallback(() => {
     sfx.click();
     dispatch({ type: 'START' });
@@ -63,6 +68,10 @@ export function useGame() {
     sfx.click();
     dispatch({ type: 'ACK' });
   }, []);
+  const ackLive = useCallback(() => {
+    sfx.good();
+    dispatch({ type: 'ACK_LIVE' });
+  }, []);
 
-  return { state, start, restart, roll, chooseBranch, choose, continueAuto, ack };
+  return { state, start, restart, roll, chooseBranch, choose, continueAuto, ack, ackLive };
 }

@@ -9,6 +9,7 @@ import { LogPanel } from './components/LogPanel';
 import { Controls } from './components/Controls';
 import { EventModal } from './components/EventModal';
 import { BranchModal } from './components/BranchModal';
+import { LiveModal } from './components/LiveModal';
 import { TitleScreen } from './components/TitleScreen';
 import { EndingScreen } from './components/EndingScreen';
 import { VolumeControls } from './components/VolumeControls';
@@ -17,7 +18,7 @@ import { VolumeControls } from './components/VolumeControls';
 const Board3D = lazy(() => import('./components/Board3D').then((m) => ({ default: m.Board3D })));
 
 export default function App() {
-  const { state, start, restart, roll, chooseBranch, choose, continueAuto, ack } = useGame();
+  const { state, start, restart, roll, chooseBranch, choose, continueAuto, ack, ackLive } = useGame();
 
   // タイトルの「旅を始める」でメインテーマを再生開始（ユーザー操作起点）
   const handleStart = () => {
@@ -99,6 +100,9 @@ export default function App() {
               options={state.branchOptions}
               onChoose={chooseBranch}
             />
+          )}
+          {state.phase === 'live' && state.activeLive && (
+            <LiveModal key="live" review={state.activeLive} onAck={ackLive} />
           )}
         </AnimatePresence>
       </div>

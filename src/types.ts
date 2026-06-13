@@ -268,7 +268,26 @@ export type GamePhase =
   | 'moving'
   | 'branch' // 分岐選択待ち
   | 'event' // イベント表示中
+  | 'live' // 定期ライブ（スカウト査定）表示中
   | 'ended'; // ゲームオーバー or ゴール
+
+/** 定期ライブの査定結果（スカウト査定風）。 */
+export interface LiveReview {
+  /** ライブ回数（第何回） */
+  index: number;
+  /** 総合評価ランク */
+  grade: 'S' | 'A' | 'B' | 'C' | 'D';
+  /** 動員規模に対応する会場名 */
+  venueName: string;
+  /** 各観点の星評価（1..5） */
+  marks: { label: string; icon: string; stars: number; comment: string }[];
+  /** スカウトの総評コメント */
+  scoutComment: string;
+  /** ライブ結果として適用される効果 */
+  effects: Effect;
+  /** 演出シーン */
+  scene: 'livehouse' | 'crowd' | 'festival' | 'arena';
+}
 
 export interface GameState {
   stats: Stats;
@@ -290,6 +309,10 @@ export interface GameState {
   stepsRemaining: number;
   /** 表示中のイベント */
   activeEvent: GameEvent | null;
+  /** 表示中の定期ライブ査定（phase==='live' のとき） */
+  activeLive: LiveReview | null;
+  /** これまでに開催した定期ライブの回数 */
+  liveCount: number;
   /** イベント結果テキスト（選択後/自動進行後に表示） */
   eventResult: string | null;
   /** 分岐の選択肢（next の square id 配列） */

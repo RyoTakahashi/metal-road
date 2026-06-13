@@ -12,6 +12,7 @@ import {
   squareById,
 } from './engine';
 import { pickEventForSquare } from './eventPicker';
+import { evaluateLive, isLiveTurn } from './liveReview';
 
 export type Action =
   | { type: 'START' }
@@ -22,7 +23,8 @@ export type Action =
   | { type: 'CHOOSE_BRANCH'; targetId: string }
   | { type: 'CHOOSE'; index: number }
   | { type: 'CONTINUE_AUTO' }
-  | { type: 'ACK' };
+  | { type: 'ACK' }
+  | { type: 'ACK_LIVE' };
 
 function clone(state: GameState): GameState {
   return structuredClone(state);
@@ -69,7 +71,20 @@ function syncArea(s: GameState): void {
   }
 }
 
-/** ターン終了処理：活動費→敗退判定→ターン進行→フェーズ更新→10年でフィナーレ。 */
+/** ターンを1つ進めて idle に戻す（10年経過でフィナーレ）。 */
+function advanceTurn(s: GameState): void {
+  s.turn += 1;
+  if (s.turn > s.maxTurns) {
+    resolveFinale(s);
+    return;
+  }
+  s.phase = 'idle';
+}
+
+/**
+ * ターン終了処理：活動費→敗退判定→（5ターン目なら定期ライブ）→ターン進行。
+ * 定期ライブはマスのイベント完了後に挟むため、ここで live フェーズへ分岐する。
+ */
 function finalizeTurn(s: GameState): void {
   s.activeEvent = null;
   s.eventResult = null;
@@ -86,15 +101,15 @@ function finalizeTurn(s: GameState): void {
     return;
   }
 
-  s.turn += 1;
-
-  // 10年（120ターン）経過でフィナーレ
-  if (s.turn > s.maxTurns) {
-    resolveFinale(s);
-    return;
+  // いま完了したターンが5の倍数 → 定期ライブ（査定）を開催
+  if (isLiveTurn(s.turn)) {
+    s.liveCount += 1;
+    s.activeLive = evaluateLive(s, s.liveCount);
+    s.phase = 'live';
+    return; // ターン進行は ACK_LIVE 後
   }
 
-  s.phase = 'idle';
+  advanceTurn(s);
 }
 
 /** マスに到達したときの解決（エリア同期→イベント抽選）。 */
@@ -201,6 +216,23 @@ export function reducer(state: GameState, action: Action): GameState {
     case 'ACK': {
       const s = clone(state);
       finalizeTurn(s);
+      return s;
+    }
+
+    case 'ACK_LIVE': {
+      if (state.phase !== 'live' || !state.activeLive) return state;
+      const s = clone(state);
+      const liveEffects = s.activeLive!.effects;
+      applyEffect(s, liveEffects); // ライブ報酬を反映
+      s.activeLive = null;
+      refreshUnlocks(s); // ライブでファン等が伸びてエリア解放されることも
+      const over = checkGameOver(s);
+      if (over) {
+        s.ending = over;
+        s.phase = 'ended';
+        return s;
+      }
+      advanceTurn(s); // ライブ完了後にターンを進める
       return s;
     }
 
