@@ -6,3 +6,7 @@ dist-ssr
 .vscode/*
 !.vscode/extensions.json
 *.tsbuildinfo
+
+# 一時的なスクリーンショット/検証スクリプト（コミットしない）
+.*.mjs
+cap-*.mjs
