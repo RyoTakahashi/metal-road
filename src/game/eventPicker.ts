@@ -1,6 +1,6 @@
 import type { EventCategory, GameEvent, GameState, Square } from '../types';
 import { EVENTS } from '../data/events';
-import { phaseForTurn, PHASES } from '../data/characters';
+import { phaseById, phaseForTurn, PHASES } from '../data/characters';
 
 const ALL_EVENTS = Object.values(EVENTS);
 
@@ -32,13 +32,64 @@ function isEligible(ev: GameEvent, state: GameState): boolean {
   return true;
 }
 
-/** フェーズ重み × イベント基礎重みで1件抽選。 */
+/**
+ * プレイヤーの状態（友好度・ステータス）に応じた動的バイアス倍率。
+ * 「育て方によって起きることが変わる」感を作る中核。1.0 を基準に増減する。
+ */
+function dynamicBias(ev: GameEvent, state: GameState): number {
+  let mult = 1;
+
+  // 1) キャラ友好度バイアス: 関係が深いキャラのイベントほど顕著に出やすい。
+  //    友好度0で約-60%、40で基準前後、100で約+180%。育てた相手の物語が増える。
+  if (ev.charId) {
+    const cs = state.cast[ev.charId];
+    if (cs?.met) {
+      mult *= 0.4 + (cs.affinity / 100) * 2.4;
+    } else {
+      // 未会いのキャラのイベント（＝出会いイベント）は等倍のまま
+    }
+  }
+
+  // 2) ステータス親和バイアス: 強みに沿ったシーンが寄ってくる。
+  const { skill, fans, morale } = state.stats;
+  const cat = ev.category;
+  if (cat === 'promo') {
+    // 知名度（ファン）と実力（スキル）が高いほどメディア/宣伝の声がかかる
+    if (fans >= 8000) mult *= 1.5;
+    else if (fans >= 2000) mult *= 1.2;
+    if (skill >= 80) mult *= 1.35; // コアな音楽シーンからのアプローチ
+    else if (skill >= 50) mult *= 1.15;
+  } else if (cat === 'live') {
+    if (fans >= 5000) mult *= 1.35;
+    else if (fans >= 1000) mult *= 1.15;
+    if (skill >= 60) mult *= 1.15;
+  } else if (cat === 'practice') {
+    // スキル探求型: 既にスキルが高いほど、より高みを目指す制作/練習イベントが増える
+    if (skill >= 60) mult *= 1.3;
+  } else if (cat === 'relation') {
+    // 士気（バンドの結束）が高いほど人間関係を深める出来事が増える
+    if (morale >= 80) mult *= 1.35;
+    else if (morale >= 50) mult *= 1.15;
+  } else if (cat === 'trouble') {
+    // 苦境は、低ステータス時にやや増える（順風満帆だと減る）
+    if (morale < 40 || skill < 25) mult *= 1.3;
+    if (fans >= 8000 && morale >= 70) mult *= 0.7;
+  } else if (cat === 'encounter') {
+    // 出会いは序盤(meet)で活きるが、人脈が広がる(知名度)と新たな出会いも呼ぶ
+    if (fans >= 3000) mult *= 1.15;
+  }
+
+  return Math.max(0.1, mult);
+}
+
+/** エリア重み × イベント基礎重み × 動的バイアスで1件抽選。 */
 function weightedPick(events: GameEvent[], state: GameState): GameEvent | null {
-  const phase = phaseForTurn(state.turn);
+  const area = phaseById(state.phaseId);
   const weighted = events.map((ev) => {
-    const catW = ev.category ? phase.weights[ev.category] ?? 1 : 1;
+    const catW = ev.category ? area.weights[ev.category] ?? 1 : 1;
     const base = ev.weight ?? 1;
-    return { ev, w: Math.max(0, catW * base) };
+    const bias = dynamicBias(ev, state);
+    return { ev, w: Math.max(0, catW * base * bias) };
   });
   const total = weighted.reduce((a, b) => a + b.w, 0);
   if (total <= 0) return null;
