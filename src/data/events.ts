@@ -1,5 +1,6 @@
 import type { GameEvent } from '../types';
 import { CAST_EVENTS } from './eventsCast';
+import { MEMBER_EVENTS } from './eventsMembers';
 
 /**
  * 固定/汎用イベント定義。Square.eventId から参照される。
@@ -707,5 +708,5 @@ const BASE_EVENTS: Record<string, GameEvent> = {
   },
 };
 
-/** 固定/汎用イベント＋登場人物イベントを統合した全イベント。 */
-export const EVENTS: Record<string, GameEvent> = { ...BASE_EVENTS, ...CAST_EVENTS };
+/** 固定/汎用＋登場人物＋メンバー個別ストーリーを統合した全イベント。 */
+export const EVENTS: Record<string, GameEvent> = { ...BASE_EVENTS, ...CAST_EVENTS, ...MEMBER_EVENTS };
