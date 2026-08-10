@@ -1,6 +1,7 @@
 import React, { Suspense, lazy } from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import { EVENTS } from './data/events';
 import './styles/index.css';
 
 // 開発用フラグ（通常プレイには影響しない）：
@@ -11,8 +12,12 @@ const params = new URLSearchParams(window.location.search);
 const slice = params.get('slice');
 const scene = params.get('scene');
 const ending = params.get('ending'); // 'goal' | 'bad'（エンディング確認用）
+const eventId = params.get('event'); // 任意イベントを直接プレビュー（検証用）
 const LiveStageScene3D = lazy(() =>
   import('./slice/LiveStageScene3D').then((m) => ({ default: m.LiveStageScene3D })),
+);
+const EventModalLazy = lazy(() =>
+  import('./components/EventModal').then((m) => ({ default: m.EventModal })),
 );
 const BadEndScene3D = lazy(() =>
   import('./components/scenes/BadEndScene3D').then((m) => ({ default: m.BadEndScene3D })),
@@ -48,6 +53,20 @@ if (slice === 'stage' || slice === 'badend') {
         </div>
       </div>
     </Suspense>
+  );
+} else if (eventId) {
+  // 任意イベントの見た目を直接確認する開発用ルート（?event=<id>）
+  const ev = EVENTS[eventId];
+  root = ev ? (
+    <Suspense fallback={fallback}>
+      <div style={{ position: 'fixed', inset: 0, background: '#0a0a10' }}>
+        <EventModalLazy event={ev} result={null} onChoose={() => {}} onContinueAuto={() => {}} onAck={() => {}} />
+      </div>
+    </Suspense>
+  ) : (
+    <div style={{ position: 'fixed', inset: 0, background: '#0a0a10', color: '#e8e6ea', display: 'grid', placeItems: 'center' }}>
+      unknown event: {eventId}
+    </div>
   );
 } else if (ending) {
   const goal = ending === 'goal';
