@@ -7,12 +7,12 @@ import type { Character, PhaseDef, PhaseId } from '../types';
  */
 export const CHARACTERS: Character[] = [
   // --- バンド（初期メンバー） ---
-  { id: 'yu', name: 'ユウ', role: 'band', title: 'Vo & Gt（主人公）', bio: '武道館、いつかドームを夢見る不器用な熱血漢。', instrument: 'vocal', hair: '#d11a35', isMember: true },
-  { id: 'take', name: 'タケ', role: 'band', title: 'Drums', bio: '幼馴染。口は悪いが面倒見がいい屋台骨。', instrument: 'drums', hair: '#2bb6a8', isMember: true },
-  { id: 'ryo', name: 'リョウ', role: 'band', title: 'Bass', bio: '心配性だが堅実。バンドの良心。', instrument: 'bass', hair: '#e8b339', isMember: true },
+  { id: 'yu', name: 'ユウ', role: 'band', title: 'Vo（主人公）', bio: '強気で騒がしいが実は寂しがり屋。幼い頃に観たインディーズ・メタルに衝撃を受け、メタル以外に生きる道はないと信じる。内臓に響くデスボイスが武器。コンディション管理に気を使うくせに大の酒好き。', instrument: 'vocal', hair: '#d11a35', isMember: true },
+  { id: 'take', name: 'タケ', role: 'band', title: 'Drums', bio: '天真爛漫で元気いっぱい、だが極度のあがり症。元陸上部で、ユウの「速く走るにはドラムだ」という嘘を今も信じている。メタルには詳しくないが誰とでも仲良くなれる。実は一番ポテンシャルが高い。夢はオリンピック。', instrument: 'drums', hair: '#2bb6a8', isMember: true },
+  { id: 'ryo', name: 'リョウ', role: 'band', title: 'Bass', bio: '内気で物静か、だがバンドへの思いは誰より強い。元はギター志望だが軽音部の頭数合わせでベースに転向し、今はベースとメタルをこよなく愛する。売れることより、この仲間で長く続けたい。無類のメタルマニア。', instrument: 'bass', hair: '#e8b339', isMember: true },
 
   // --- バンド（加入候補） ---
-  { id: 'shin', name: 'シン', role: 'band', title: 'Lead Gt', bio: '超絶技巧の一匹狼ギタリスト。プライドが高い。', instrument: 'guitar', hair: '#9b5cff', isMember: true },
+  { id: 'shin', name: 'シン', role: 'band', title: 'Lead Gt', bio: '孤高でストイック、実は人見知り。音楽家一家に生まれた天才肌だが、メタルは親族に反対されコンプレックスに。速弾きに全てを捧げ、有名になるより理想の音を追う。', instrument: 'guitar', hair: '#9b5cff', isMember: true },
   { id: 'mao', name: 'マオ', role: 'band', title: 'Keys', bio: '音大出身の才媛。サウンドの幅を広げる。', instrument: 'keys', hair: '#e8e6ea', isMember: true },
 
   // --- プロデューサー / 業界人 ---
